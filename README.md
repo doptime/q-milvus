@@ -11,6 +11,14 @@ Quick milvus driver for go, provides the simplest way to use milvus.
 # what you should do?
 1. define you schema like this:
 ```
+package milvus
+
+import (
+	"context"
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	qmilvus "github.com/yangkequn/q-milvus-driver-for-go"
+)
+
 type FooCollection struct {
 	Id         int64     `schema:"in,out" primarykey:"true"`
 	Name       string    `schema:""`
@@ -20,7 +28,7 @@ type FooCollection struct {
 }
 
 //Index: return the name of index, and the index type, used to build index automatically
-//index name is also used by search
+//index name is also used by search, do not omit
 func (v FooCollection) Index() (indexFieldName string, index entity.Index) {
 	index, _ = entity.NewIndexIvfFlat(entity.IP, 256)
 	return "Vector", index
@@ -29,12 +37,12 @@ func (v FooCollection) Index() (indexFieldName string, index entity.Index) {
 //BuildSearchVector: return the vector to be Inserted
 //If your Vector is precalculated, Just return it
 func (v FooCollection) BuildSearchVector(ctx context.Context) (Vector []float32) {
-	text := fmt.Sprintf("Name:%s Detail:%s", v.Name, v.Detail)
-	Vector, _ = Foo.CalculateVector(ctx,  text)
-	return Vector
+	//text := fmt.Sprintf("Name:%s Detail:%s", v.Name, v.Detail)
+	//Vector, _ = Foo.CalculateVector(ctx,  text)
+	return v.Vector
 }
 
-var FooContext *CollectionContext = CollectionContext{}.Init("milvus.vm:19530", FooCollection{}, "partitionName")
+var FooContext *qmilvus.CollectionContext = qmilvus.CollectionContext{}.Init("milvus.vm:19530", FooCollection{}, "partitionName")
 ```
 2. using FooContext, you can do the the left things easily:
 
