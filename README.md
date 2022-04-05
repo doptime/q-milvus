@@ -1,14 +1,14 @@
 # q-milvus-driver-for-go
-Quick milvus driver for go, provides the simplest way to use milvus.
+qmilvus provides the simplest way to use milvus.
 ## Feature
 * auto build schema
 * auto build index
 * auto insert collection entity
 * auto search 
 
-> so fantastic as if milvus is transparent.Helping quickly access milvus service!
+> So fantastic as if milvus is transparent. Access milvus service can be so easy!
 
-# what you should do?
+## what you should do?
 1. define you schema like this:
 ```
 package milvus
@@ -27,18 +27,17 @@ type FooCollection struct {
 	Score      float32   ``
 }
 
-//Index: return the name of index, and the index type, used to build index automatically
-//index name is also used by search, do not omit
+//Index: define your index field name and type here. required
 func (v FooCollection) Index() (indexFieldName string, index entity.Index) {
 	index, _ = entity.NewIndexIvfFlat(entity.IP, 256)
 	return "Vector", index
 }
 
-//BuildSearchVector: return the vector to be Inserted
-//If your Vector is precalculated, Just return it
+//BuildSearchVector: Calculate vector here; if precalculated, Just return it
 func (v FooCollection) BuildSearchVector(ctx context.Context) (Vector []float32) {
 	//text := fmt.Sprintf("Name:%s Detail:%s", v.Name, v.Detail)
-	//Vector, _ = Foo.CalculateVector(ctx,  text)
+	//vector, _ = Foo.CalculateVector(ctx,  text)
+    //return vector
 	return v.Vector
 }
 
@@ -50,7 +49,11 @@ var FooContext *qmilvus.CollectionContext = qmilvus.CollectionContext{}.Init("mi
 ```
 err:=FooContext.Insert(c context.Context, bar []*Bar)
 ```
-> here struct Bar and FooCollection should  shares some fields with same Name and Type. these fields will cast from Bar to FooCollection. 
+> here struct Bar will cast （borrow from c++ cast ） into struct FooCollection.  structs  fields with same name and type will be copied, Other Bar fields will be neglected. 
+
+> The casted FooCollection will insert into milvus Collection according to go Tag.
+
+> Id         int64      `schema:"in,out" primarykey:"true"`, means Id Field will insert to collection, and will returned in searchField.
 
 * search
 ```
