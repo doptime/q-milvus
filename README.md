@@ -41,13 +41,13 @@ func (v FooEntity) BuildSearchVector(ctx context.Context) (Vector []float32) {
 	return v.Vector
 }
 
-var FooContext *qmilvus.Collection = qmilvus.Collection{}.Init("milvus.vm:19530", FooEntity{}, "partitionName")
+var FooCollection *qmilvus.Collection = qmilvus.Collection{}.Init("milvus.vm:19530", FooEntity{}, "partitionName")
 ```
-2. using FooContext, you can do the the left things easily:
+2. using FooCollection, you can do the the left things easily:
 
 * insert entities
 ```
-err:=FooContext.Insert(c context.Context, bar []*Bar)
+err:=FooCollection.Insert(c context.Context, bar []*Bar)
 ```
 > here struct Bar will cast （borrow from c++ cast ） into struct FooEntity.  structs  fields with same name and type will be copied, Other Bar fields will be neglected. 
 
@@ -57,9 +57,9 @@ err:=FooContext.Insert(c context.Context, bar []*Bar)
 
 * search
 ```
-ids,scores,err:=FooContext.Search(ctx context.Context, query []float32)
+ids,scores,err:=FooCollection.Search(ctx context.Context, query []float32)
 ```
 * Remove entity
 ```
-err:=FooContext.RemoveByKey(c context.Context, bar []*Bar)
+err:=FooCollection.RemoveByKey(c context.Context, bar []*Bar)
 ```
