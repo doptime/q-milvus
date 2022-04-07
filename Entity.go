@@ -1,4 +1,4 @@
-package milvus
+package qmilvus
 
 import (
 	"context"

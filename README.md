@@ -11,7 +11,7 @@ qmilvus provides the simplest way to use milvus.
 ## what you should do?
 1. define you schema like this:
 ```
-package milvus
+package qmilvus
 
 import (
 	"context"

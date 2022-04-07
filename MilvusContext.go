@@ -1,4 +1,4 @@
-package milvus
+package qmilvus
 
 import (
 	"context"
@@ -35,23 +35,6 @@ type MilvusContextInterface interface {
 	CreateCollection(ctx context.Context) (err error)
 	BuildSchema() *entity.Schema
 	BuildOutputFields()
-}
-
-func (c MilvusContext) Init(milvusAdress string, collectionStruct Entity, partitionName string) *MilvusContext {
-	c.milvusAdress = milvusAdress
-	c.partitionName = partitionName
-	if len(partitionName) == 0 {
-		c.partitionName = "_default"
-	}
-
-	//Auto build index, modify IndexField if you want to use other index
-	c.IndexFieldName, c.Index = collectionStruct.Index()
-	c.collectionName = reflect.Indirect(reflect.ValueOf(collectionStruct)).Type().Name()
-	c.dataStruct = collectionStruct
-	c.BuildOutputFields()
-	c.BuildSchema()
-	c.CreateCollection(context.Background())
-	return &c
 }
 
 // BuildColumns : convert a structSlice to entity.Column, according to a schema like this:
@@ -122,65 +105,6 @@ func (c *MilvusContext) BuildColumns(structSlice interface{}) (reslt []entity.Co
 		}
 	}
 	return reslt
-}
-
-func (c *MilvusContext) DropCollection(ctx context.Context) (err error) {
-	var (
-		_client client.Client
-	)
-	if _client, err = client.NewGrpcClient(ctx, c.milvusAdress); err != nil {
-		return err
-	}
-	defer _client.Close()
-	err = _client.DropCollection(ctx, c.collectionName)
-	return err
-}
-
-//CreateCollection : try to create a collection, if it already exists, do nothing
-//if you want to remove the collection if the Schema is changed
-// just rename the collection name, another Collection will be created, without remove the old one
-func (c *MilvusContext) CreateCollection(ctx context.Context) (err error) {
-	var (
-		_client client.Client
-	)
-	if _client, err = client.NewGrpcClient(ctx, c.milvusAdress); err != nil {
-		return err
-	}
-	defer _client.Close()
-
-	if err = _client.CreateCollection(ctx, c.schema, 1); err != nil {
-		//if err string do not contain "already exists",return err
-		if !strings.Contains(err.Error(), "already exist") {
-			return err
-		}
-	}
-	//create partition
-	if err = _client.CreatePartition(ctx, c.collectionName, c.partitionName); err != nil {
-		//if err string do not contain "already exists",return err
-		if !strings.Contains(err.Error(), "already exists") {
-			return err
-		}
-	}
-	//Auto BuildIndex
-	if len(c.IndexFieldName) > 0 {
-		indexState, indexErr := _client.GetIndexState(ctx, c.collectionName, c.IndexFieldName)
-		if indexErr != nil {
-			return indexErr
-		}
-		//no index exists, create index
-		if indexState == 0 {
-			if err = _client.CreateIndex(ctx, c.collectionName, c.IndexFieldName, c.Index, false); err != nil {
-				return err
-			}
-		}
-	}
-	return err
-}
-
-// NewMilvusClient : return a client with collection loaded
-// data loaded to memory every 10 minutes
-func (c *MilvusContext) NewMilvusClient(ctx context.Context) (_client client.Client, err error) {
-	return client.NewGrpcClient(ctx, c.milvusAdress)
 }
 
 func (c *MilvusContext) BuildOutputFields() {

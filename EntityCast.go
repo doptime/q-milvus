@@ -1,4 +1,4 @@
-package milvus
+package qmilvus
 
 import (
 	"context"
@@ -7,11 +7,11 @@ import (
 	"reflect"
 )
 
-//ModeSliceToCollectionSlice cast slice to collection slice
+//ModeSliceToEntitySlice cast slice to collection slice
 //sliceIn is: []*model.Foo{ field1, field2, field3 }
 //structTo is: []*Collection{ field1, field2, field3 }
 //AutoFill the meaning field of Collection
-func (c *MilvusContext) ModeSliceToCollectionSlice(ctx context.Context, sliceIn interface{}, structTo interface{}) (out interface{}) {
+func (c *MilvusContext) ModeSliceToEntitySlice(ctx context.Context, sliceIn interface{}, structTo interface{}) (out interface{}) {
 	structSlice := SliceCast(sliceIn, structTo)
 
 	slice, _, err := GetSliceValueType(structSlice)
