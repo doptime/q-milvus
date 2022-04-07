@@ -7,7 +7,7 @@ import (
 )
 
 //remove Milvus collection item using DeleteByPks
-func (c *MilvusContext) RemoveByKey(ctx context.Context, id int64) (err error) {
+func (c *Collection) RemoveByKey(ctx context.Context, id int64) (err error) {
 	milvuslient, errM := c.NewMilvusClient(ctx)
 	if errM != nil {
 		return errM

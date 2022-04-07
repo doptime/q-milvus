@@ -41,7 +41,7 @@ func (v FooEntity) BuildSearchVector(ctx context.Context) (Vector []float32) {
 	return v.Vector
 }
 
-var FooContext *qmilvus.MilvusContext = qmilvus.MilvusContext{}.Init("milvus.vm:19530", FooEntity{}, "partitionName")
+var FooContext *qmilvus.Collection = qmilvus.Collection{}.Init("milvus.vm:19530", FooEntity{}, "partitionName")
 ```
 2. using FooContext, you can do the the left things easily:
 

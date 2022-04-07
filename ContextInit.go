@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func (c MilvusContext) Init(milvusAdress string, collectionStruct Entity, partitionName string) *MilvusContext {
+func (c Collection) Init(milvusAdress string, collectionStruct Entity, partitionName string) *Collection {
 	c.milvusAdress = milvusAdress
 	c.partitionName = partitionName
 	if len(partitionName) == 0 {
@@ -18,6 +18,6 @@ func (c MilvusContext) Init(milvusAdress string, collectionStruct Entity, partit
 	c.dataStruct = collectionStruct
 	c.BuildOutputFields()
 	c.BuildSchema()
-	c.CreateCollection(context.Background())
+	c.Create(context.Background())
 	return &c
 }

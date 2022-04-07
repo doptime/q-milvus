@@ -11,7 +11,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-type MilvusContext struct {
+type Collection struct {
 	milvusAdress   string
 	partitionName  string
 	collectionName string
@@ -24,12 +24,12 @@ type MilvusContext struct {
 	outputFields []string
 }
 
-type MilvusContextInterface interface {
-	Init() *MilvusContext
+type CollectionInterface interface {
+	Init() *Collection
 	BuildColumns() []entity.Column
 	NewMilvusClient() (c client.Client, err error)
 	RemoveByKey(partitionName string, id int64) error
-	InsertModels(c context.Context, modelSlice interface{}) (err error)
+	Insert(c context.Context, modelSlice interface{}) (err error)
 	Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error)
 	DropCollection(ctx context.Context) (err error)
 	CreateCollection(ctx context.Context) (err error)
@@ -48,7 +48,7 @@ type MilvusContextInterface interface {
 // 		{Name: "Meaning", DataType: entity.FieldTypeFloatVector, TypeParams: map[string]string{"dim": "384"}},
 // 	},
 // }
-func (c *MilvusContext) BuildColumns(structSlice interface{}) (reslt []entity.Column) {
+func (c *Collection) BuildColumns(structSlice interface{}) (reslt []entity.Column) {
 	var (
 		colume entity.Column
 		err    error
@@ -107,7 +107,7 @@ func (c *MilvusContext) BuildColumns(structSlice interface{}) (reslt []entity.Co
 	return reslt
 }
 
-func (c *MilvusContext) BuildOutputFields() {
+func (c *Collection) BuildOutputFields() {
 	structvalue, structType, err := GetStructValueType(c.dataStruct)
 	if err != nil {
 		panic(err)
@@ -124,7 +124,7 @@ func (c *MilvusContext) BuildOutputFields() {
 	}
 }
 
-func (c *MilvusContext) BuildSchema() {
+func (c *Collection) BuildSchema() {
 	structvalue, structType, err := GetStructValueType(c.dataStruct)
 	if err != nil {
 		panic(err)

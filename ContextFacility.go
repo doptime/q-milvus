@@ -9,11 +9,11 @@ import (
 
 // NewMilvusClient : return a client with collection loaded
 // data loaded to memory every 10 minutes
-func (c *MilvusContext) NewMilvusClient(ctx context.Context) (_client client.Client, err error) {
+func (c *Collection) NewMilvusClient(ctx context.Context) (_client client.Client, err error) {
 	return client.NewGrpcClient(ctx, c.milvusAdress)
 }
 
-func (c *MilvusContext) DropCollection(ctx context.Context) (err error) {
+func (c *Collection) DropCollection(ctx context.Context) (err error) {
 	var (
 		_client client.Client
 	)
@@ -24,10 +24,10 @@ func (c *MilvusContext) DropCollection(ctx context.Context) (err error) {
 	return _client.DropCollection(ctx, c.collectionName)
 }
 
-//CreateCollection : try to create a collection, if it already exists, do nothing
+//Create : try to create a collection, if it already exists, do nothing
 //if you want to remove the collection if the Schema is changed
 // just rename the collection name, another Collection will be created, without remove the old one
-func (c *MilvusContext) CreateCollection(ctx context.Context) (err error) {
+func (c *Collection) Create(ctx context.Context) (err error) {
 	var (
 		_client client.Client
 	)

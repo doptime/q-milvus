@@ -9,7 +9,7 @@ import (
 //检查源字段和目标字段的对应关系
 //parameter structSlice may be new data or old data
 
-func (c *MilvusContext) InsertModels(ctx context.Context, modelSlice interface{}) (err error) {
+func (c *Collection) Insert(ctx context.Context, modelSlice interface{}) (err error) {
 	var (
 		_client client.Client
 	)

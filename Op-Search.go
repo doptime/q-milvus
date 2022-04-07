@@ -9,7 +9,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *MilvusContext) Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error) {
+func (c *Collection) Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error) {
 	var (
 		sr      []client.SearchResult
 		_client client.Client
@@ -45,7 +45,7 @@ func (c *MilvusContext) Search(ctx context.Context, query []float32) (Ids []int6
 	return Ids, Scores, nil
 }
 
-func (c *MilvusContext) ParseSearchResult(sr *[]client.SearchResult) (result interface{}, err error) {
+func (c *Collection) ParseSearchResult(sr *[]client.SearchResult) (result interface{}, err error) {
 	v := reflect.Indirect(reflect.ValueOf(c.dataStruct))
 	// we only accept structs
 	if v.Kind() != reflect.Struct {
