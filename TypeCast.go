@@ -11,7 +11,7 @@ import (
 //sliceIn is: []*model.Foo{ field1, field2, field3 }
 //structTo is: []*Collection{ field1, field2, field3 }
 //AutoFill the meaning field of Collection
-func (c *CollectionContext) ModeSliceToCollectionSlice(ctx context.Context, sliceIn interface{}, structTo interface{}) (out interface{}) {
+func (c *MilvusContext) ModeSliceToCollectionSlice(ctx context.Context, sliceIn interface{}, structTo interface{}) (out interface{}) {
 	structSlice := SliceCast(sliceIn, structTo)
 
 	slice, _, err := GetSliceValueType(structSlice)
@@ -19,7 +19,7 @@ func (c *CollectionContext) ModeSliceToCollectionSlice(ctx context.Context, slic
 		panic(err.Error())
 	}
 
-	//Meaning vector is missing, so we need to calculate it
+	//Calculate Vector
 	for i := 0; i < slice.Len(); i++ {
 		_v := reflect.Indirect(slice.Index(i))
 		//interface is value based, so we need to get the struct value, and then set the field

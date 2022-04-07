@@ -11,15 +11,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-//if Collection wants to be rebuild, just rename the collection, so the collection name changed accordingly
-type Collection interface {
-	BuildSearchVector(ctx context.Context) (Vector []float32)
-	// Index : return the index field name and index type
-	// Only one index field is allowed, because milvus search engine only support one index field
-	Index() (string, entity.Index)
-}
-
-type CollectionContext struct {
+type MilvusContext struct {
 	milvusAdress   string
 	partitionName  string
 	collectionName string
@@ -27,13 +19,13 @@ type CollectionContext struct {
 	IndexFieldName string
 	Index          entity.Index
 
-	dataStruct   Collection
+	dataStruct   Entity
 	schema       *entity.Schema
 	outputFields []string
 }
 
 type MilvusContextInterface interface {
-	Init() *CollectionContext
+	Init() *MilvusContext
 	BuildColumns() []entity.Column
 	NewMilvusClient() (c client.Client, err error)
 	RemoveByKey(partitionName string, id int64) error
@@ -45,7 +37,7 @@ type MilvusContextInterface interface {
 	BuildOutputFields()
 }
 
-func (c CollectionContext) Init(milvusAdress string, collectionStruct Collection, partitionName string) *CollectionContext {
+func (c MilvusContext) Init(milvusAdress string, collectionStruct Entity, partitionName string) *MilvusContext {
 	c.milvusAdress = milvusAdress
 	c.partitionName = partitionName
 	if len(partitionName) == 0 {
@@ -73,7 +65,7 @@ func (c CollectionContext) Init(milvusAdress string, collectionStruct Collection
 // 		{Name: "Meaning", DataType: entity.FieldTypeFloatVector, TypeParams: map[string]string{"dim": "384"}},
 // 	},
 // }
-func (c *CollectionContext) BuildColumns(structSlice interface{}) (reslt []entity.Column) {
+func (c *MilvusContext) BuildColumns(structSlice interface{}) (reslt []entity.Column) {
 	var (
 		colume entity.Column
 		err    error
@@ -132,7 +124,7 @@ func (c *CollectionContext) BuildColumns(structSlice interface{}) (reslt []entit
 	return reslt
 }
 
-func (c *CollectionContext) DropCollection(ctx context.Context) (err error) {
+func (c *MilvusContext) DropCollection(ctx context.Context) (err error) {
 	var (
 		_client client.Client
 	)
@@ -147,7 +139,7 @@ func (c *CollectionContext) DropCollection(ctx context.Context) (err error) {
 //CreateCollection : try to create a collection, if it already exists, do nothing
 //if you want to remove the collection if the Schema is changed
 // just rename the collection name, another Collection will be created, without remove the old one
-func (c *CollectionContext) CreateCollection(ctx context.Context) (err error) {
+func (c *MilvusContext) CreateCollection(ctx context.Context) (err error) {
 	var (
 		_client client.Client
 	)
@@ -187,11 +179,11 @@ func (c *CollectionContext) CreateCollection(ctx context.Context) (err error) {
 
 // NewMilvusClient : return a client with collection loaded
 // data loaded to memory every 10 minutes
-func (c *CollectionContext) NewMilvusClient(ctx context.Context) (_client client.Client, err error) {
+func (c *MilvusContext) NewMilvusClient(ctx context.Context) (_client client.Client, err error) {
 	return client.NewGrpcClient(ctx, c.milvusAdress)
 }
 
-func (c *CollectionContext) BuildOutputFields() {
+func (c *MilvusContext) BuildOutputFields() {
 	structvalue, structType, err := GetStructValueType(c.dataStruct)
 	if err != nil {
 		panic(err)
@@ -208,7 +200,7 @@ func (c *CollectionContext) BuildOutputFields() {
 	}
 }
 
-func (c *CollectionContext) BuildSchema() {
+func (c *MilvusContext) BuildSchema() {
 	structvalue, structType, err := GetStructValueType(c.dataStruct)
 	if err != nil {
 		panic(err)

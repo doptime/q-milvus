@@ -9,29 +9,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-//检查源字段和目标字段的对应关系
-//parameter structSlice may be new data or old data
-
-func (c *CollectionContext) InsertModels(ctx context.Context, modelSlice interface{}) (err error) {
-	var (
-		_client client.Client
-	)
-	//step1: convert []*model.Foo to []*Collection
-	dataSlice := c.ModeSliceToCollectionSlice(ctx, modelSlice, c.dataStruct)
-
-	// insert into default partition
-	if _client, err = c.NewMilvusClient(ctx); err != nil {
-		return err
-	}
-	// in a main func, remember to close the client
-	defer _client.Close()
-	columes := c.BuildColumns(dataSlice)
-	_, err = _client.Insert(context.Background(), c.collectionName, c.partitionName, columes...)
-	return err
-	//no need to Flush，milvus auto Flush every second,if Flush too frequently, it will create too many file segment
-}
-
-func (c *CollectionContext) Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error) {
+func (c *MilvusContext) Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error) {
 	var (
 		sr      []client.SearchResult
 		_client client.Client
@@ -67,17 +45,7 @@ func (c *CollectionContext) Search(ctx context.Context, query []float32) (Ids []
 	return Ids, Scores, nil
 }
 
-//remove Milvus collection item using DeleteByPks
-func (c *CollectionContext) RemoveByKey(ctx context.Context, id int64) (err error) {
-	milvuslient, errM := c.NewMilvusClient(ctx)
-	if errM != nil {
-		return errM
-	}
-	defer milvuslient.Close()
-	return milvuslient.DeleteByPks(ctx, c.collectionName, c.partitionName, entity.NewColumnInt64("Id", []int64{id}))
-}
-
-func (c *CollectionContext) ParseSearchResult(sr *[]client.SearchResult) (result interface{}, err error) {
+func (c *MilvusContext) ParseSearchResult(sr *[]client.SearchResult) (result interface{}, err error) {
 	v := reflect.Indirect(reflect.ValueOf(c.dataStruct))
 	// we only accept structs
 	if v.Kind() != reflect.Struct {

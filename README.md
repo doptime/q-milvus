@@ -19,7 +19,7 @@ import (
 	qmilvus "github.com/yangkequn/q-milvus-driver-for-go"
 )
 
-type FooCollection struct {
+type FooEntity struct {
 	Id         int64     `schema:"in,out" primarykey:"true"`
 	Name       string    `schema:""`
 	Detail     string    `schema:""`
@@ -28,20 +28,20 @@ type FooCollection struct {
 }
 
 //Index: define your index field name and type here. required
-func (v FooCollection) Index() (indexFieldName string, index entity.Index) {
+func (v FooEntity) Index() (indexFieldName string, index entity.Index) {
 	index, _ = entity.NewIndexIvfFlat(entity.IP, 256)
 	return "Vector", index
 }
 
 //BuildSearchVector: Calculate vector here; if precalculated, Just return it
-func (v FooCollection) BuildSearchVector(ctx context.Context) (Vector []float32) {
+func (v FooEntity) BuildSearchVector(ctx context.Context) (Vector []float32) {
 	//text := fmt.Sprintf("Name:%s Detail:%s", v.Name, v.Detail)
 	//vector, _ = Foo.CalculateVector(ctx,  text)
     //return vector
 	return v.Vector
 }
 
-var FooContext *qmilvus.CollectionContext = qmilvus.CollectionContext{}.Init("milvus.vm:19530", FooCollection{}, "partitionName")
+var FooContext *qmilvus.MilvusContext = qmilvus.MilvusContext{}.Init("milvus.vm:19530", FooEntity{}, "partitionName")
 ```
 2. using FooContext, you can do the the left things easily:
 
@@ -49,9 +49,9 @@ var FooContext *qmilvus.CollectionContext = qmilvus.CollectionContext{}.Init("mi
 ```
 err:=FooContext.Insert(c context.Context, bar []*Bar)
 ```
-> here struct Bar will cast （borrow from c++ cast ） into struct FooCollection.  structs  fields with same name and type will be copied, Other Bar fields will be neglected. 
+> here struct Bar will cast （borrow from c++ cast ） into struct FooEntity.  structs  fields with same name and type will be copied, Other Bar fields will be neglected. 
 
-> The casted FooCollection will insert into milvus Collection according to go Tag.
+> The casted FooEntity will insert into milvus Collection according to go Tag.
 
 > Id         int64      `schema:"in,out" primarykey:"true"`, means Id Field will insert to collection, and will returned in searchField.
 
