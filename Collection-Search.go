@@ -14,7 +14,7 @@ func (c *Collection) Search(ctx context.Context, query []float32) (Ids []int64, 
 		sr      []client.SearchResult
 		_client client.Client
 	)
-	if _client, err = c.NewMilvusClient(ctx); err != nil {
+	if _client, err = c.NewGrpcClient(ctx); err != nil {
 		return nil, nil, err
 	}
 	defer _client.Close()

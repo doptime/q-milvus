@@ -27,11 +27,11 @@ type Collection struct {
 type CollectionInterface interface {
 	Init() *Collection
 	BuildColumns() []entity.Column
-	NewMilvusClient() (c client.Client, err error)
+	NewGrpcClient() (c client.Client, err error)
 	RemoveByKey(partitionName string, id int64) error
 	Insert(c context.Context, modelSlice interface{}) (err error)
 	Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error)
-	DropCollection(ctx context.Context) (err error)
+	Drop(ctx context.Context) (err error)
 	CreateCollection(ctx context.Context) (err error)
 	BuildSchema() *entity.Schema
 	BuildOutputFields()

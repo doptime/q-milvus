@@ -7,23 +7,6 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 )
 
-// NewMilvusClient : return a client with collection loaded
-// data loaded to memory every 10 minutes
-func (c *Collection) NewMilvusClient(ctx context.Context) (_client client.Client, err error) {
-	return client.NewGrpcClient(ctx, c.milvusAdress)
-}
-
-func (c *Collection) DropCollection(ctx context.Context) (err error) {
-	var (
-		_client client.Client
-	)
-	if _client, err = c.NewMilvusClient(ctx); err != nil {
-		return err
-	}
-	defer _client.Close()
-	return _client.DropCollection(ctx, c.collectionName)
-}
-
 //Create : try to create a collection, if it already exists, do nothing
 //if you want to remove the collection if the Schema is changed
 // just rename the collection name, another Collection will be created, without remove the old one
@@ -31,7 +14,7 @@ func (c *Collection) Create(ctx context.Context) (err error) {
 	var (
 		_client client.Client
 	)
-	if _client, err = c.NewMilvusClient(ctx); err != nil {
+	if _client, err = c.NewGrpcClient(ctx); err != nil {
 		return err
 	}
 	defer _client.Close()

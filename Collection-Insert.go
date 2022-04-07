@@ -17,7 +17,7 @@ func (c *Collection) Insert(ctx context.Context, modelSlice interface{}) (err er
 	dataSlice := c.ModeSliceToEntitySlice(ctx, modelSlice, c.dataStruct)
 
 	// insert into default partition
-	if _client, err = c.NewMilvusClient(ctx); err != nil {
+	if _client, err = c.NewGrpcClient(ctx); err != nil {
 		return err
 	}
 	// in a main func, remember to close the client
