@@ -27,13 +27,8 @@ func (c *CollectionContext) InsertModels(ctx context.Context, modelSlice interfa
 	defer _client.Close()
 	columes := c.BuildColumns(dataSlice)
 	_, err = _client.Insert(context.Background(), c.collectionName, c.partitionName, columes...)
-	if err != nil {
-		return err
-	}
-	//让数据立即可用
-	err = _client.Flush(context.Background(), c.collectionName, false)
-	// try LoadModel immediately
-	return _client.LoadCollection(ctx, c.collectionName, true)
+	return err
+	//no need to Flush，milvus auto Flush every second,if Flush too frequently, it will create too many file segment
 }
 
 func (c *CollectionContext) Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error) {
