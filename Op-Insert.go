@@ -1,4 +1,4 @@
-package milvus
+package qmilvus
 
 import (
 	"context"
@@ -14,7 +14,7 @@ func (c *MilvusContext) InsertModels(ctx context.Context, modelSlice interface{}
 		_client client.Client
 	)
 	//step1: convert []*model.Foo to []*Collection
-	dataSlice := c.ModeSliceToCollectionSlice(ctx, modelSlice, c.dataStruct)
+	dataSlice := c.ModeSliceToEntitySlice(ctx, modelSlice, c.dataStruct)
 
 	// insert into default partition
 	if _client, err = c.NewMilvusClient(ctx); err != nil {
