@@ -131,7 +131,7 @@ func (c *Collection) BuildSchema() {
 	}
 
 	c.schema = &entity.Schema{
-		CollectionName: structType.Name(),
+		CollectionName: c.collectionName,
 		Description:    "collection for insert and search with " + structType.Name(),
 		AutoID:         false,
 		Fields:         []*entity.Field{},
