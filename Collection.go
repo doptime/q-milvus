@@ -173,7 +173,7 @@ func (c *Collection) BuildSchema() {
 				primarykey += 1
 			}
 		} else if _, ok := vi.(string); ok {
-			columeType = entity.FieldTypeString
+			columeType = entity.FieldTypeVarChar
 			if tagv := tpi.Tag.Get("primarykey"); tagv != "" {
 				_primarykey = true
 				primarykey += 1
