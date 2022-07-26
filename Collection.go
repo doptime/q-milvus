@@ -25,7 +25,6 @@ type Collection struct {
 }
 
 type CollectionInterface interface {
-	Init() *Collection
 	BuildColumns() []entity.Column
 	NewGrpcClient() (c client.Client, err error)
 	RemoveByKey(partitionName string, id int64) error
@@ -35,6 +34,24 @@ type CollectionInterface interface {
 	CreateCollection(ctx context.Context) (err error)
 	BuildSchema() *entity.Schema
 	BuildOutputFields()
+}
+
+func NewCollection(milvusAdress string, entityStruct Entity, partitionName string) *Collection {
+	c := &Collection{}
+	c.milvusAdress = milvusAdress
+	c.partitionName = partitionName
+	c.collectionName = reflect.Indirect(reflect.ValueOf(entityStruct)).Type().Name() + "s"
+	if len(partitionName) == 0 {
+		c.partitionName = "_default"
+	}
+
+	//Auto build index, modify IndexField if you want to use other index
+	c.IndexFieldName, c.Index = entityStruct.Index()
+	c.dataStruct = entityStruct
+	c.BuildOutputFields()
+	c.BuildSchema()
+	c.Create(context.Background())
+	return c
 }
 
 // BuildColumns : convert a structSlice to entity.Column, according to a schema like this:
