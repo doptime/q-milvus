@@ -16,7 +16,7 @@ package qmilvus
 import (
 	"context"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
-	qmilvus "github.com/yangkequn/q-milvus-driver-for-go"
+	milvus "github.com/yangkequn/q-milvus-driver-for-go"
 )
 
 type FooEntity struct {
@@ -35,13 +35,11 @@ func (v FooEntity) Index() (indexFieldName string, index entity.Index) {
 
 //BuildSearchVector: Calculate vector here; if precalculated, Just return it
 func (v FooEntity) BuildSearchVector(ctx context.Context) (Vector []float32) {
-	//text := fmt.Sprintf("Name:%s Detail:%s", v.Name, v.Detail)
-	//vector, _ = Foo.CalculateVector(ctx,  text)
-    //return vector
+	//return  Foo.CalculateVector(ctx,   v.Detail)
 	return v.Vector
 }
 
-var FooCollection *qmilvus.Collection = qmilvus.Collection{}.Init("milvus.vm:19530", FooEntity{}, "partitionName")
+var FooCollection *milvus.Collection = milvus.NewCollection("milvus.vm:19530", FooEntity{}, "partitionName")
 ```
 2. using FooCollection, you can do the the left things easily:
 

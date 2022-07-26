@@ -2,7 +2,7 @@ module github.com/yangkequn/q-milvus-driver-for-go
 
 go 1.18
 
-require github.com/milvus-io/milvus-sdk-go/v2 v2.0.0
+require github.com/milvus-io/milvus-sdk-go/v2 v2.1.0
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
