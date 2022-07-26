@@ -142,6 +142,9 @@ func (c *Collection) BuildOutputFields() {
 }
 
 func (c *Collection) BuildSchema() {
+	var (
+		tagvalue string
+	)
 	structvalue, structType, err := GetStructValueType(c.dataStruct)
 	if err != nil {
 		panic(err)
@@ -168,28 +171,30 @@ func (c *Collection) BuildSchema() {
 		_primarykey := false
 		if _, ok := vi.(int64); ok {
 			columeType = entity.FieldTypeInt64
-			if tagv := tpi.Tag.Get("primarykey"); tagv != "" {
+			if tagvalue = tpi.Tag.Get("primarykey"); tagvalue != "" {
 				_primarykey = true
 				primarykey += 1
 			}
 		} else if _, ok := vi.(string); ok {
 			columeType = entity.FieldTypeVarChar
-			if tagv := tpi.Tag.Get("primarykey"); tagv != "" {
+			if tagvalue := tpi.Tag.Get("primarykey"); tagvalue != "" {
 				_primarykey = true
 				primarykey += 1
 			}
-			if TypeParams["max-length"] = tpi.Tag.Get("max-length"); TypeParams["max-length"] == "" {
-				panic(fmt.Errorf("%s max-length is not set", tpi.Name))
+			if tagvalue = tpi.Tag.Get(entity.TypeParamMaxLength); tagvalue == "" {
+				panic(fmt.Errorf("%s %s is not set", tpi.Name, entity.TypeParamMaxLength))
 			}
+			TypeParams[entity.TypeParamMaxLength] = tagvalue
 		} else if _, ok := vi.(float32); ok {
 			columeType = entity.FieldTypeFloat
 		} else if _, ok := vi.(float64); ok {
 			columeType = entity.FieldTypeDouble
 		} else if _, ok := vi.([]float32); ok {
 			columeType = entity.FieldTypeFloatVector
-			if TypeParams["dim"] = tpi.Tag.Get("dim"); TypeParams["dim"] == "" {
+			if tagvalue = tpi.Tag.Get("dim"); tagvalue == "" {
 				panic(fmt.Errorf("%s dim is not set", tpi.Name))
 			}
+			TypeParams[entity.TypeParamDim] = tagvalue
 		} else if _, ok := vi.(bool); ok {
 			columeType = entity.FieldTypeBool
 		} else if _, ok := vi.(int8); ok {
