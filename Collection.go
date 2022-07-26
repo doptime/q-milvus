@@ -174,6 +174,10 @@ func (c *Collection) BuildSchema() {
 			}
 		} else if _, ok := vi.(string); ok {
 			columeType = entity.FieldTypeString
+			if tagv := tpi.Tag.Get("primarykey"); tagv != "" {
+				_primarykey = true
+				primarykey += 1
+			}
 		} else if _, ok := vi.(float32); ok {
 			columeType = entity.FieldTypeFloat
 		} else if _, ok := vi.(float64); ok {
