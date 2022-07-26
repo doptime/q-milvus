@@ -81,7 +81,8 @@ func (c *Collection) BuildColumns(structSlice interface{}) (reslt []entity.Colum
 		} else if s.DataType == entity.FieldTypeInt64 {
 			colume = entity.NewColumnInt64(s.Name, []int64{})
 		} else if s.DataType == entity.FieldTypeVarChar || s.DataType == entity.FieldTypeString {
-			colume = entity.NewColumnString(s.Name, []string{})
+			colume = entity.NewColumnVarChar(s.Name, []string{})
+			//colume = entity.NewColumnString(s.Name, []string{})
 		} else if s.DataType == entity.FieldTypeFloatVector {
 			if dim, err = strconv.Atoi(s.TypeParams["dim"]); err != nil {
 				panic(err)
