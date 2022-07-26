@@ -178,6 +178,9 @@ func (c *Collection) BuildSchema() {
 				_primarykey = true
 				primarykey += 1
 			}
+			if TypeParams["max-length"] = tpi.Tag.Get("max-length"); TypeParams["max-length"] == "" {
+				panic(fmt.Errorf("%s max-length is not set", tpi.Name))
+			}
 		} else if _, ok := vi.(float32); ok {
 			columeType = entity.FieldTypeFloat
 		} else if _, ok := vi.(float64); ok {
