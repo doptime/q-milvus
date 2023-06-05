@@ -32,9 +32,9 @@ var collection *milvus.Collection = milvus.NewCollection[*FooEntity]("milvus.vm:
 ```
 var models []*FooEntity
 // insert operation
-err:=collection.Insert(c context.Context, models)
+err:=collection.Insert(models)
 // search operation
-ids,scores,models,err:=collection.Search(ctx context.Context, query []float32)
-// remove operation
-err:=collection.RemoveByKey(c context.Context, bar []*Bar)
+ids,scores,models,err:=collection.Search( query []float32)
+// remove operation. type of ids : []int64
+err:=collection.RemoveByKey(ids)
 ```

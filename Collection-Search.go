@@ -1,7 +1,6 @@
 package qmilvus
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 
@@ -9,12 +8,12 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *Collection[v]) Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, models []v, err error) {
+func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, models []v, err error) {
 	var (
 		sr      []client.SearchResult
 		_client client.Client
 	)
-	if _client, err = c.NewGrpcClient(ctx); err != nil {
+	if _client, err = c.NewGrpcClient(c.ctx); err != nil {
 		return nil, nil, nil, err
 	}
 	defer _client.Close()
@@ -22,13 +21,13 @@ func (c *Collection[v]) Search(ctx context.Context, query []float32) (Ids []int6
 	//查询最相近的相似度
 	vectors, vectorField := []entity.Vector{entity.FloatVector(query)}, c.IndexFieldName
 	//LoadCollection is necessary
-	err = _client.LoadCollection(ctx, c.collectionName, false)
+	err = _client.LoadCollection(c.ctx, c.collectionName, false)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	// Use flat search param
 	sp, _ := entity.NewIndexFlatSearchParam()
-	if sr, err = _client.Search(ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, 10, sp); err != nil {
+	if sr, err = _client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, 10, sp); err != nil {
 		return nil, nil, nil, err
 	}
 
