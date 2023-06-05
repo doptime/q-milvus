@@ -1,15 +1,9 @@
 # q-milvus-driver-for-go
 qmilvus provides the simplest way to use milvus.
-## Feature
-* auto build schema
-* auto build index
-* auto insert collection entity
-* auto search 
-
+## Feature: Auto build schema & Auto build index & Insert Models easily & Search easily
 > So fantastic as if milvus is transparent. Access milvus service can be so easy!
 
-## what you should do?
-1. define you schema like this:
+## step1. define you schema like this:
 ```
 package qmilvus
 
@@ -21,10 +15,9 @@ import (
 
 type FooEntity struct {
 	Id         int64     `schema:"in,out" primarykey:"true"`
-	Name       string    `schema:""`
-	Detail     string    `schema:""`
+	Name       string    `schema:"in,out"`
 	Vector     []float32 `dim:"384" schema:"in" index:"true"`
-	Score      float32   ``
+	Score      float32   `schema:"out"`
 }
 
 //Index: define your index field name and type here. required
@@ -33,31 +26,15 @@ func (v FooEntity) Index() (indexFieldName string, index entity.Index) {
 	return "Vector", index
 }
 
-//BuildSearchVector: Calculate vector here; if precalculated, Just return it
-func (v FooEntity) BuildSearchVector(ctx context.Context) (Vector []float32) {
-	//return  Foo.CalculateVector(ctx,   v.Detail)
-	return v.Vector
-}
-
-var FooCollection *milvus.Collection = milvus.NewCollection("milvus.vm:19530", FooEntity{}, "partitionName")
+var collection *milvus.Collection = milvus.NewCollection[*FooEntity]("milvus.vm:19530",  "partitionName")
 ```
-2. using FooCollection, you can do the the left things easily:
-
-* insert entities
+## step2. using collection, you can Insert Search or Remove
 ```
-err:=FooCollection.Insert(c context.Context, bar []*Bar)
-```
-> here struct Bar will cast （borrow from c++ cast ） into struct FooEntity.  structs  fields with same name and type will be copied, Other Bar fields will be neglected. 
-
-> The casted FooEntity will insert into milvus Collection according to go Tag.
-
-> Id         int64      `schema:"in,out" primarykey:"true"`, means Id Field will insert to collection, and will returned in searchField.
-
-* search
-```
-ids,scores,err:=FooCollection.Search(ctx context.Context, query []float32)
-```
-* Remove entity
-```
-err:=FooCollection.RemoveByKey(c context.Context, bar []*Bar)
+var models []*FooEntity
+// insert operation
+err:=collection.Insert(c context.Context, models)
+// search operation
+ids,scores,models,err:=collection.Search(ctx context.Context, query []float32)
+// remove operation
+err:=collection.RemoveByKey(c context.Context, bar []*Bar)
 ```

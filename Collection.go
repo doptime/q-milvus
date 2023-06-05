@@ -4,14 +4,25 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
-	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-type Collection struct {
+// type v should contains fields Id Vector and Score
+//
+//	type FooEntity struct {
+//		Id         int64     `schema:"in,out" primarykey:"true"`
+//		Name       string    `schema:""`
+//		Detail     string    `schema:""`
+//		Vector     []float32 `dim:"384" schema:"in" index:"true"`
+//		Score      float32   ``
+//	}
+type milvusEntity interface {
+	Index() (indexFieldName string, index entity.Index)
+}
+type Collection[v any] struct {
+	ctx            context.Context
 	milvusAdress   string
 	partitionName  string
 	collectionName string
@@ -19,117 +30,56 @@ type Collection struct {
 	IndexFieldName string
 	Index          entity.Index
 
-	dataStruct   Entity
 	schema       *entity.Schema
 	outputFields []string
 }
 
-type CollectionInterface interface {
-	BuildColumns() []entity.Column
-	NewGrpcClient() (c client.Client, err error)
-	RemoveByKey(partitionName string, id int64) error
-	Insert(c context.Context, modelSlice interface{}) (err error)
-	Search(ctx context.Context, query []float32) (Ids []int64, Scores []float32, err error)
-	Drop(ctx context.Context) (err error)
-	CreateCollection(ctx context.Context) (err error)
-	BuildSchema() *entity.Schema
-	BuildOutputFields()
-}
-
-func NewCollection(milvusAdress string, entityStruct Entity, partitionName string) *Collection {
-	c := &Collection{}
-	c.milvusAdress = milvusAdress
-	c.partitionName = partitionName
-	c.collectionName = reflect.Indirect(reflect.ValueOf(entityStruct)).Type().Name() + "s"
-	if len(partitionName) == 0 {
-		c.partitionName = "_default"
-	}
-
-	//Auto build index, modify IndexField if you want to use other index
-	c.IndexFieldName, c.Index = entityStruct.Index()
-	c.dataStruct = entityStruct
-	c.BuildOutputFields()
-	c.BuildSchema()
-	c.Create(context.Background())
+func (c *Collection[v]) WithContext(ctx context.Context) (ret *Collection[v]) {
+	c.ctx = ctx
 	return c
 }
 
-// BuildColumns : convert a structSlice to entity.Column, according to a schema like this:
-// var FooSchema *entity.Schema = &entity.Schema{
-// 	CollectionName: "CollectionFoo",
-// 	Description:    "collection for insert and search theme with CollectionFoo",
-// 	AutoID:         false,
-// 	Fields: []*entity.Field{
-// 		{Name: "Id", DataType: entity.FieldTypeInt64, PrimaryKey: true, AutoID: false},
-// 		{Name: "Popularity", DataType: entity.FieldTypeString, PrimaryKey: false, AutoID: false},
-// 		{Name: "Meaning", DataType: entity.FieldTypeFloatVector, TypeParams: map[string]string{"dim": "384"}},
-// 	},
-// }
-func (c *Collection) BuildColumns(structSlice interface{}) (reslt []entity.Column) {
-	var (
-		colume entity.Column
-		err    error
-		dim    int = 0
-	)
-
-	reslt = []entity.Column{}
-	for _, s := range c.schema.Fields {
-		if s.DataType == entity.FieldTypeDouble {
-			colume = entity.NewColumnDouble(s.Name, []float64{})
-		} else if s.DataType == entity.FieldTypeFloat {
-			colume = entity.NewColumnFloat(s.Name, []float32{})
-		} else if s.DataType == entity.FieldTypeInt64 {
-			colume = entity.NewColumnInt64(s.Name, []int64{})
-		} else if s.DataType == entity.FieldTypeVarChar || s.DataType == entity.FieldTypeString {
-			colume = entity.NewColumnVarChar(s.Name, []string{})
-			//colume = entity.NewColumnString(s.Name, []string{})
-		} else if s.DataType == entity.FieldTypeFloatVector {
-			if dim, err = strconv.Atoi(s.TypeParams["dim"]); err != nil {
-				panic(err)
-			}
-			colume = entity.NewColumnFloatVector(s.Name, dim, [][]float32{})
-		} else if s.DataType == entity.FieldTypeInt32 {
-			colume = entity.NewColumnInt32(s.Name, []int32{})
-		} else if s.DataType == entity.FieldTypeInt16 {
-			colume = entity.NewColumnInt16(s.Name, []int16{})
-		} else if s.DataType == entity.FieldTypeInt8 {
-			colume = entity.NewColumnInt8(s.Name, []int8{})
-		} else if s.DataType == entity.FieldTypeBool {
-			colume = entity.NewColumnBool(s.Name, []bool{})
-		} else if s.DataType == entity.FieldTypeBinaryVector {
-			if dim, err = strconv.Atoi(s.TypeParams["dim"]); err != nil {
-				panic(err)
-			}
-			colume = entity.NewColumnBinaryVector(s.Name, dim, [][]byte{})
-		} else {
-			panic(fmt.Sprintf("unsupported data type: %v", s.DataType))
-		}
-
-		reslt = append(reslt, colume)
-
-		sliceValue := reflect.ValueOf(structSlice)
-		for i := 0; i < sliceValue.Len(); i++ {
-			_v := reflect.Indirect(sliceValue.Index(i))
-			_field := _v.FieldByName(s.Name)
-			// check demension match, if not, skip Insert
-			if _field.Type().Kind() == reflect.Slice {
-				vectorLen := _field.Len()
-				if vectorLen != dim {
-					println("Error: milvus insert dim not match")
-				}
-			}
-			colume.AppendValue(_field.Interface())
-
-		}
-	}
-	return reslt
+func (c *Collection[v]) WithIndex() (ret *Collection[v]) {
+	return c
 }
 
-func (c *Collection) BuildOutputFields() {
-	structvalue, structType, err := GetStructValueType(c.dataStruct)
-	if err != nil {
-		panic(err)
+// index : i.g. entity.NewIndexIvfFlat(entity.IP, 768)
+func NewCollection[v milvusEntity](milvusAdress string, partitionName string) *Collection[v] {
+	c := &Collection[v]{}
+	c.milvusAdress = milvusAdress
+	c.partitionName = partitionName
+	c.ctx = context.Background()
+
+	//create instance of type v
+	_v := reflect.New(reflect.TypeOf((*v)(nil)).Elem()).Interface().(milvusEntity)
+	c.IndexFieldName, c.Index = _v.Index()
+
+	//take name of type v as collection name
+	_type := reflect.TypeOf((*v)(nil))
+	for _type.Kind() == reflect.Ptr || _type.Kind() == reflect.Slice {
+		_type = _type.Elem()
 	}
+	c.collectionName = _type.Name() + "s"
+
+	if len(partitionName) == 0 {
+		c.partitionName = "_default"
+	}
+	c.BuildOutputFields()
+	c.BuildInSchema()
+	c.Create()
+	return c
+}
+
+func (c *Collection[v]) BuildOutputFields() {
+	var (
+		structvalue reflect.Value
+		structType  reflect.Type
+	)
+	structType = reflect.TypeOf((*v)(nil))
+	for structType.Kind() == reflect.Ptr || structType.Kind() == reflect.Slice {
+		structType = structType.Elem()
+	}
+	structvalue = reflect.New(structType).Elem()
 
 	c.outputFields = []string{}
 	for i := 0; i < structvalue.NumField(); i++ {
@@ -142,27 +92,26 @@ func (c *Collection) BuildOutputFields() {
 	}
 }
 
-func (c *Collection) BuildSchema() {
+func (c *Collection[v]) BuildInSchema() {
 	var (
 		tagvalue string
 	)
-	structvalue, structType, err := GetStructValueType(c.dataStruct)
-	if err != nil {
-		panic(err)
+	_type := reflect.TypeOf((*v)(nil))
+	for _type.Kind() == reflect.Ptr || _type.Kind() == reflect.Slice {
+		_type = _type.Elem()
 	}
 
 	c.schema = &entity.Schema{
 		CollectionName: c.collectionName,
-		Description:    "collection for insert and search with " + structType.Name(),
+		Description:    "collection for insert and search with " + _type.Name(),
 		AutoID:         false,
 		Fields:         []*entity.Field{},
 	}
 
 	primarykey := 0
-	for i := 0; i < structvalue.NumField(); i++ {
+	for i := 0; i < _type.NumField(); i++ {
 		// gets us a StructField
-		vi := structvalue.Field(i).Interface()
-		tpi := structType.Field(i)
+		tpi := _type.Field(i)
 		if isSchema := tpi.Tag.Get("schema"); !strings.Contains(isSchema, "in") {
 			continue
 		}
@@ -170,13 +119,14 @@ func (c *Collection) BuildSchema() {
 
 		var columeType entity.FieldType
 		_primarykey := false
-		if _, ok := vi.(int64); ok {
+		_fieldType := tpi.Type.String()
+		if _fieldType == "int64" {
 			columeType = entity.FieldTypeInt64
 			if tagvalue = tpi.Tag.Get("primarykey"); tagvalue != "" {
 				_primarykey = true
 				primarykey += 1
 			}
-		} else if _, ok := vi.(string); ok {
+		} else if _fieldType == "string" {
 			columeType = entity.FieldTypeVarChar
 			if tagvalue := tpi.Tag.Get("primarykey"); tagvalue != "" {
 				_primarykey = true
@@ -186,31 +136,31 @@ func (c *Collection) BuildSchema() {
 				panic(fmt.Errorf("%s %s is not set", tpi.Name, entity.TypeParamMaxLength))
 			}
 			TypeParams[entity.TypeParamMaxLength] = tagvalue
-		} else if _, ok := vi.(float32); ok {
+		} else if _fieldType == "float32" {
 			columeType = entity.FieldTypeFloat
-		} else if _, ok := vi.(float64); ok {
+		} else if _fieldType == "float64" {
 			columeType = entity.FieldTypeDouble
-		} else if _, ok := vi.([]float32); ok {
+		} else if _fieldType == "[]float32" {
 			columeType = entity.FieldTypeFloatVector
 			if tagvalue = tpi.Tag.Get("dim"); tagvalue == "" {
 				panic(fmt.Errorf("%s dim is not set", tpi.Name))
 			}
 			TypeParams[entity.TypeParamDim] = tagvalue
-		} else if _, ok := vi.(bool); ok {
+		} else if _fieldType == "bool" {
 			columeType = entity.FieldTypeBool
-		} else if _, ok := vi.(int8); ok {
+		} else if _fieldType == "int8" {
 			columeType = entity.FieldTypeInt8
-		} else if _, ok := vi.(int16); ok {
+		} else if _fieldType == "int16" {
 			columeType = entity.FieldTypeInt16
-		} else if _, ok := vi.(int32); ok {
+		} else if _fieldType == "int32" {
 			columeType = entity.FieldTypeInt32
-		} else if _, ok := vi.(byte); ok {
+		} else if _fieldType == "byte" {
 			columeType = entity.FieldTypeBinaryVector
 			if TypeParams["dim"] = tpi.Tag.Get("dim"); TypeParams["dim"] == "" {
 				panic(fmt.Errorf("%s dim is not set", tpi.Name))
 			}
 		} else {
-			panic(fmt.Errorf("unsupported type %s", structType.Field(i).Type.String()))
+			panic(fmt.Errorf("unsupported type %s", _fieldType))
 		}
 
 		c.schema.Fields = append(c.schema.Fields, &entity.Field{

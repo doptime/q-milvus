@@ -1,7 +1,6 @@
 package qmilvus
 
 import (
-	"context"
 	"testing"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
@@ -18,23 +17,18 @@ type OggAction struct {
 }
 
 func (v OggAction) Index() (indexFieldName string, index entity.Index) {
-	index, _ = entity.NewIndexIvfFlat(entity.IP, 768)
-	return "Vector", index
-}
-
-//BuildSearchVector: If your SearchVector is precalculated, Just return the vector
-func (v OggAction) BuildSearchVector(ctx context.Context) (Vector []float32) {
-	return v.Vector
+	ind, _ := entity.NewIndexIvfFlat(entity.IP, 768)
+	return "Vector", ind
 }
 
 var milvusAdress string = "milvus.vm:19530"
-var OggActionCollection *Collection = NewCollection(milvusAdress, OggAction{}, "")
+var OggActionCollection = NewCollection[*OggAction](milvusAdress, "")
 
 func TestOgg(t *testing.T) {
-	oggActionList := make([]OggAction, 0)
+	oggActionList := make([]*OggAction, 0)
 	//create random []float32 with 768 dim
 	for i := 200; i < 300; i++ {
-		oggAction := OggAction{
+		oggAction := &OggAction{
 			Id:     int64(i),
 			Ogg:    "test",
 			Vector: make([]float32, 768),
@@ -45,7 +39,7 @@ func TestOgg(t *testing.T) {
 		}
 		oggActionList = append(oggActionList, oggAction)
 	}
-	err := OggActionCollection.Insert(context.Background(), oggActionList)
+	err := OggActionCollection.Insert(oggActionList)
 	if err != nil {
 		t.Error(err)
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 )
 
-func (c *Collection) Drop(ctx context.Context) (err error) {
+func (c *Collection[v]) Drop(ctx context.Context) (err error) {
 	var (
 		_client client.Client
 	)
