@@ -26,8 +26,8 @@ func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, 
 		return nil, nil, nil, err
 	}
 	// Use flat search param
-	sp, _ := entity.NewIndexFlatSearchParam()
-	if sr, err = _client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, 10, sp); err != nil {
+	searchParam, _ := entity.NewIndexFlatSearchParam()
+	if sr, err = _client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, 10, searchParam); err != nil {
 		return nil, nil, nil, err
 	}
 
