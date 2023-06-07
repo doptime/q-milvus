@@ -1,7 +1,6 @@
 # q-milvus-driver-for-go
-qmilvus provides the simplest way to use milvus.
-## Feature: Auto build schema & Auto build index & Insert Models easily & Search easily
-> So fantastic as if milvus is transparent. Access milvus service can be so easy!
+qmilvus provides the transparent way to use milvus.
+## Feature: Auto build schema & Auto build index & Insert Search Remove easily
 
 ## step1. define you schema like this:
 ```
@@ -26,7 +25,7 @@ func (v FooEntity) Index() (indexFieldName string, index entity.Index) {
 	return "Vector", index
 }
 
-var collection *milvus.Collection = milvus.NewCollection[*FooEntity]("milvus.vm:19530",  "partitionName")
+var collection *milvus.Collection = milvus.NewCollection[FooEntity]("milvus.vm:19530",  "partitionName")
 ```
 ## step2. using collection, you can Insert Search or Remove
 ```

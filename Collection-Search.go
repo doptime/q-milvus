@@ -8,7 +8,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, models []v, err error) {
+func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, models []*v, err error) {
 	var (
 		sr      []client.SearchResult
 		_client client.Client
@@ -45,7 +45,7 @@ func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, 
 	models, err = c.ParseSearchResult(sr)
 	return Ids, Scores, models, nil
 }
-func (c *Collection[v]) SetModelFields(column entity.Column, models []v) {
+func (c *Collection[v]) SetModelFields(column entity.Column, models []*v) {
 	if source, ok := column.(*entity.ColumnInt64); ok {
 		for i, v := range source.Data() {
 			model := reflect.ValueOf(models[i]).Elem()
@@ -105,8 +105,8 @@ func (c *Collection[v]) SetModelFields(column entity.Column, models []v) {
 	}
 }
 
-func (c *Collection[v]) ParseSearchResult(sr []client.SearchResult) (models []v, err error) {
-	models = make([]v, 0, len(sr))
+func (c *Collection[v]) ParseSearchResult(sr []client.SearchResult) (models []*v, err error) {
+	models = make([]*v, 0, len(sr))
 	// typ := v.Type()
 	//extract result from search result to SearchResultColumns
 	for _, result := range sr {
