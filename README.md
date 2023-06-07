@@ -14,7 +14,7 @@ import (
 
 type FooEntity struct {
 	Id         int64     `schema:"in,out" primarykey:"true"`
-	Name       string    `schema:"in,out"`
+	Name       string    `schema:"in,out" max_length:"2048"`
 	Vector     []float32 `dim:"384" schema:"in" index:"true"`
 	Score      float32   `schema:"out"`
 }
