@@ -25,7 +25,7 @@ func (v FooEntity) Index() (indexFieldName string, index entity.Index) {
 	return "Vector", index
 }
 
-var collection *milvus.Collection = milvus.NewCollection[FooEntity]("milvus.vm:19530",  "partitionName")
+var collection *milvus.Collection = milvus.NewCollection[FooEntity]("milvus.lan:19530",  "",true)
 ```
 ## step2. using collection, you can Insert Search or Remove
 ```
@@ -33,7 +33,7 @@ var models []*FooEntity
 // insert operation
 err:=collection.Insert(models)
 // search operation
-ids,scores,models,err:=collection.Search( query []float32)
+ids,scores,models,err:=collection.SearchVector(query []float32,10)
 // remove operation. type of ids : []int64
 err:=collection.RemoveByKey(ids)
 ```
