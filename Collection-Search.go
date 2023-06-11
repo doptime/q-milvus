@@ -8,7 +8,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, models []*v, err error) {
+func (c *Collection[v]) Search(query []float32, TopK int) (Ids []int64, Scores []float32, models []*v, err error) {
 	var (
 		sr      []client.SearchResult
 		_client client.Client
@@ -27,7 +27,7 @@ func (c *Collection[v]) Search(query []float32) (Ids []int64, Scores []float32, 
 	}
 	// Use flat search param
 	searchParam, _ := entity.NewIndexFlatSearchParam()
-	if sr, err = _client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, 10, searchParam); err != nil {
+	if sr, err = _client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
 		return nil, nil, nil, err
 	}
 

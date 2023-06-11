@@ -1,4 +1,4 @@
-module github.com/yangkequn/q-milvus-driver-for-go
+module github.com/yangkequn/q-milvus
 
 go 1.18
 

@@ -1,6 +1,8 @@
 package qmilvus
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
@@ -21,30 +23,41 @@ func (v OggAction) Index() (indexFieldName string, index entity.Index) {
 	return "Vector", ind
 }
 
-var milvusAdress string = "milvus.vm:19530"
-var OggActionCollection = NewCollection[*OggAction](milvusAdress, "")
+var milvusAdress string = "milvus.lan:19530"
+var OggActionCollection = NewCollection[OggAction](milvusAdress, "")
 
-func TestOgg(t *testing.T) {
-	oggActionList := make([]*OggAction, 0)
+func randomVector(dim int) []float32 {
+	vec := make([]float32, dim)
+	for i := 0; i < dim; i++ {
+		vec[i] = rand.Float32()
+	}
+	return vec
+}
+func TestInsert(t *testing.T) {
+	oggActionList := make([]*OggAction, 200)
 	//create random []float32 with 768 dim
-	for i := 200; i < 300; i++ {
-		oggAction := &OggAction{
+	for i := 0; i < 200; i++ {
+		oggActionList[i] = &OggAction{
 			Id:     int64(i),
 			Ogg:    "test",
-			Vector: make([]float32, 768),
 			Score:  float32(i),
+			Vector: randomVector(768),
 		}
-		for j := 0; j < 768; j++ {
-			oggAction.Vector[j] = float32(i)
-		}
-		oggActionList = append(oggActionList, oggAction)
 	}
-	err := OggActionCollection.Insert(oggActionList)
-	if err != nil {
+	fmt.Println("inserting 200 oggAction")
+
+	if err := OggActionCollection.Insert(oggActionList); err != nil {
 		t.Error(err)
 	}
 }
+func TestSearch(t *testing.T) {
+	var searchVector = randomVector(768)
+	//search 10 similar vector
 
-// func main() {
-// 	TestOgg(nil)
-// }
+	if ids, scores, models, err := OggActionCollection.Search(searchVector, 10); err != nil {
+		t.Error(err)
+	} else {
+		//print length of ids,scores,models
+		t.Log(len(ids), len(scores), len(models))
+	}
+}

@@ -17,7 +17,7 @@ var lastFlushTime map[string]time.Time = make(map[string]time.Time)
 //检查源字段和目标字段的对应关系
 //parameter structSlice may be new data or old data
 
-func (c *Collection[v]) Insert(models []v) (err error) {
+func (c *Collection[v]) Insert(models []*v) (err error) {
 	var (
 		_client        client.Client
 		_lastFlushTime time.Time = time.Time{}
@@ -47,7 +47,7 @@ func (c *Collection[v]) Insert(models []v) (err error) {
 
 // columes is used to insert []struct to collection
 // the milvus Insert method accept collection only
-func (c *Collection[v]) BuildColumns(models []v) (result []entity.Column) {
+func (c *Collection[v]) BuildColumns(models []*v) (result []entity.Column) {
 	var (
 		colume entity.Column
 		err    error

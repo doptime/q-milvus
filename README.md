@@ -1,5 +1,5 @@
-# q-milvus-driver-for-go
-qmilvus provides the transparent way to use milvus.
+# q-milvus
+q-milvus provides the transparent way to use milvus.
 ## Feature: Auto build schema & Auto build index & Insert Search Remove easily
 
 ## step1. define you schema like this:
@@ -9,7 +9,7 @@ package qmilvus
 import (
 	"context"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
-	milvus "github.com/yangkequn/q-milvus-driver-for-go"
+	milvus "github.com/yangkequn/q-milvus"
 )
 
 type FooEntity struct {
