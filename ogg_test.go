@@ -24,7 +24,6 @@ func (v OggAction) Index() (indexFieldName string, index entity.Index) {
 }
 
 var milvusAdress string = "milvus.lan:19530"
-var OggActionCollection = NewCollection[OggAction](milvusAdress, "")
 
 func randomVector(dim int) []float32 {
 	vec := make([]float32, dim)
@@ -34,9 +33,14 @@ func randomVector(dim int) []float32 {
 	return vec
 }
 func TestInsert(t *testing.T) {
-	oggActionList := make([]*OggAction, 200)
+	var collection, collectionErr = NewCollection[OggAction](milvusAdress, "", true)
+	if collectionErr != nil {
+		t.Fatal("can not connect to milvus")
+	}
+
+	oggActionList := make([]*OggAction, 100)
 	//create random []float32 with 768 dim
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 100; i++ {
 		oggActionList[i] = &OggAction{
 			Id:     int64(i),
 			Ogg:    "test",
@@ -46,15 +50,19 @@ func TestInsert(t *testing.T) {
 	}
 	fmt.Println("inserting 200 oggAction")
 
-	if err := OggActionCollection.Insert(oggActionList); err != nil {
+	if err := collection.Insert(oggActionList); err != nil {
 		t.Error(err)
 	}
 }
 func TestSearch(t *testing.T) {
+	var collection, collectionErr = NewCollection[OggAction](milvusAdress, "", true)
+	if collectionErr != nil {
+		t.Fatal("can not connect to milvus")
+	}
 	var searchVector = randomVector(768)
 	//search 10 similar vector
 
-	if ids, scores, models, err := OggActionCollection.Search(searchVector, 10); err != nil {
+	if ids, scores, models, err := collection.SearchVector(searchVector, 10); err != nil {
 		t.Error(err)
 	} else {
 		//print length of ids,scores,models
