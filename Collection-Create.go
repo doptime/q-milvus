@@ -19,7 +19,6 @@ func (c *Collection[v]) Create() (ret *Collection[v]) {
 	)
 	if _client, err = c.NewGrpcClient(c.ctx); err != nil {
 		log.Panic().Str("cannot connect milvus", c.milvusAdress)
-		panic(nil)
 	}
 	defer _client.Close()
 
@@ -27,7 +26,6 @@ func (c *Collection[v]) Create() (ret *Collection[v]) {
 		//if err string do not contain "already exists",return err
 		if !strings.Contains(err.Error(), "already exist") {
 			log.Panic().Err(err)
-			panic(err.Error())
 		}
 	}
 	//create partition
@@ -35,7 +33,6 @@ func (c *Collection[v]) Create() (ret *Collection[v]) {
 		//if err string do not contain "already exists",return err
 		if !strings.Contains(err.Error(), "already exists") {
 			log.Panic().Err(err)
-			panic(err.Error())
 		}
 	}
 	//Auto BuildIndex
@@ -43,13 +40,11 @@ func (c *Collection[v]) Create() (ret *Collection[v]) {
 
 		if indexState, err = _client.GetIndexState(c.ctx, c.collectionName, c.IndexFieldName); err != nil {
 			log.Panic().Err(err)
-			panic(err.Error())
 		}
 		//no index exists, create index
 		if indexState == 0 {
 			if err = _client.CreateIndex(c.ctx, c.collectionName, c.IndexFieldName, c.Index, false); err != nil {
 				log.Panic().Err(err)
-				panic(err.Error())
 			}
 		}
 	}
