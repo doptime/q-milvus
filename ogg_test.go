@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/rs/zerolog/log"
 )
 
 //version 1.0 concates all text together,query it's meaning vector as search vector
@@ -32,12 +33,13 @@ func randomVector(dim int) []float32 {
 	}
 	return vec
 }
-func TestInsert(t *testing.T) {
-	var collection, collectionErr = NewCollection[OggAction](milvusAdress, "", true)
-	if collectionErr != nil {
-		t.Fatal("can not connect to milvus")
-	}
 
+// var collection = NewCollection[OggAction](milvusAdress, "").Create()
+
+var collection = NewCollection[OggAction](milvusAdress, "")
+
+func TestInsert(t *testing.T) {
+	log.Panic().Str("test", "can exist")
 	oggActionList := make([]*OggAction, 100)
 	//create random []float32 with 768 dim
 	for i := 0; i < 100; i++ {
@@ -48,6 +50,7 @@ func TestInsert(t *testing.T) {
 			Vector: randomVector(768),
 		}
 	}
+	log.Info().Msg("inserting 200 oggAction")
 	fmt.Println("inserting 200 oggAction")
 
 	if err := collection.Insert(oggActionList); err != nil {
@@ -55,10 +58,6 @@ func TestInsert(t *testing.T) {
 	}
 }
 func TestSearch(t *testing.T) {
-	var collection, collectionErr = NewCollection[OggAction](milvusAdress, "", true)
-	if collectionErr != nil {
-		t.Fatal("can not connect to milvus")
-	}
 	var searchVector = randomVector(768)
 	//search 10 similar vector
 

@@ -44,7 +44,7 @@ func (c *Collection[v]) WithIndex() (ret *Collection[v]) {
 }
 
 // index : i.g. entity.NewIndexIvfFlat(entity.IP, 768)
-func NewCollection[v milvusEntity](milvusAdress string, partitionName string, CreateCollectionInServer bool) (collection *Collection[v], err error) {
+func NewCollection[v milvusEntity](milvusAdress string, partitionName string) (collection *Collection[v]) {
 	c := &Collection[v]{}
 	c.milvusAdress = milvusAdress
 	c.partitionName = partitionName
@@ -66,12 +66,7 @@ func NewCollection[v milvusEntity](milvusAdress string, partitionName string, Cr
 	}
 	c.BuildOutputFields()
 	c.BuildInSchema()
-	if CreateCollectionInServer {
-		if err = c.Create(); err != nil && strings.Contains(err.Error(), "already exists") {
-			err = nil
-		}
-	}
-	return c, err
+	return c
 }
 
 func (c *Collection[v]) BuildOutputFields() {

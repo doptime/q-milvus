@@ -25,7 +25,7 @@ func (v FooEntity) Index() (indexFieldName string, index entity.Index) {
 	return "Vector", index
 }
 
-var collection *milvus.Collection = milvus.NewCollection[FooEntity]("milvus.lan:19530",  "",true)
+var collection *milvus.Collection = milvus.NewCollection[FooEntity]("milvus.lan:19530",  "").Create()
 ```
 ## step2. using collection, you can Insert Search or Remove
 ```
