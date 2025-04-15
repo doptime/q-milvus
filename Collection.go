@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
@@ -12,15 +13,13 @@ import (
 // type v should contains fields Id Vector and Score
 //
 //	type FooEntity struct {
-//		Id         int64     `schema:"in,out" primarykey:"true"`
-//		Name       string    `schema:""`
-//		Detail     string    `schema:""`
-//		Vector     []float32 `dim:"384" schema:"in" index:"true"`
+//		Id         int64     `milvus:"in,out,PK,dim"`
+//		Name       string    `milvus:""`
+//		Detail     string    `milvus:""`
+//		Vector     []float32 `milvus:"dim=384,index"`
+//		Ogg    	   string    `milvus:"in,out,max_length=65535"`
 //		Score      float32   ``
 //	}
-type milvusEntity interface {
-	Index() (indexFieldName string, index entity.Index)
-}
 type Collection[v any] struct {
 	ctx            context.Context
 	milvusAdress   string
@@ -39,20 +38,12 @@ func (c *Collection[v]) WithContext(ctx context.Context) (ret *Collection[v]) {
 	return c
 }
 
-func (c *Collection[v]) WithIndex() (ret *Collection[v]) {
-	return c
-}
-
 // index : i.g. entity.NewIndexIvfFlat(entity.IP, 768)
-func NewCollection[v milvusEntity](milvusAdress string, partitionName string) (collection *Collection[v]) {
+func NewCollection[v any](milvusAdress string) (collection *Collection[v]) {
 	c := &Collection[v]{}
 	c.milvusAdress = milvusAdress
-	c.partitionName = partitionName
+	c.partitionName = "_default"
 	c.ctx = context.Background()
-
-	//create instance of type v
-	_v := reflect.New(reflect.TypeOf((*v)(nil)).Elem()).Interface().(milvusEntity)
-	c.IndexFieldName, c.Index = _v.Index()
 
 	//take name of type v as collection name
 	_type := reflect.TypeOf((*v)(nil))
@@ -61,12 +52,21 @@ func NewCollection[v milvusEntity](milvusAdress string, partitionName string) (c
 	}
 	c.collectionName = _type.Name() + "s"
 
-	if len(partitionName) == 0 {
-		c.partitionName = "_default"
-	}
 	c.BuildOutputFields()
 	c.BuildInSchema()
 	return c
+}
+func (collection *Collection[v]) WithPartitionName(partitionName string) (ret *Collection[v]) {
+	collection.partitionName = partitionName
+	return collection
+}
+func (collection *Collection[v]) WithCollectionName(collectionName string) (ret *Collection[v]) {
+	collection.collectionName = collectionName
+	return collection
+}
+func (collection *Collection[v]) WithCreateIndex(index entity.Index) (ret *Collection[v]) {
+	collection.Index = index
+	return collection
 }
 
 func (c *Collection[v]) BuildOutputFields() {
@@ -84,7 +84,7 @@ func (c *Collection[v]) BuildOutputFields() {
 	for i := 0; i < structvalue.NumField(); i++ {
 		// gets us a StructField
 		tpi := structType.Field(i)
-		if isSchema := tpi.Tag.Get("schema"); !strings.Contains(isSchema, "out") {
+		if isSchema := tpi.Tag.Get("milvus"); !strings.Contains(isSchema, "out") {
 			continue
 		}
 		c.outputFields = append(c.outputFields, tpi.Name)
@@ -111,26 +111,22 @@ func (c *Collection[v]) BuildInSchema() {
 	for i := 0; i < _type.NumField(); i++ {
 		// gets us a StructField
 		tpi := _type.Field(i)
-		if isSchema := tpi.Tag.Get("schema"); !strings.Contains(isSchema, "in") {
+		tagMilvus := strings.ToLower(tpi.Tag.Get("milvus"))
+		if !strings.Contains(tagMilvus, "in") {
 			continue
 		}
 		TypeParams := map[string]string{}
+		_fieldType := tpi.Type.String()
+		_primarykey := strings.Contains(tagMilvus, "PK") && (_fieldType == "int64" || _fieldType == "string")
+		if _primarykey {
+			primarykey += 1
+		}
 
 		var columeType entity.FieldType
-		_primarykey := false
-		_fieldType := tpi.Type.String()
 		if _fieldType == "int64" {
 			columeType = entity.FieldTypeInt64
-			if tagvalue = tpi.Tag.Get("primarykey"); tagvalue != "" {
-				_primarykey = true
-				primarykey += 1
-			}
 		} else if _fieldType == "string" {
 			columeType = entity.FieldTypeVarChar
-			if tagvalue := tpi.Tag.Get("primarykey"); tagvalue != "" {
-				_primarykey = true
-				primarykey += 1
-			}
 			if tagvalue = tpi.Tag.Get(entity.TypeParamMaxLength); tagvalue == "" {
 				panic(fmt.Errorf("%s %s is not set", tpi.Name, entity.TypeParamMaxLength))
 			}
@@ -141,10 +137,16 @@ func (c *Collection[v]) BuildInSchema() {
 			columeType = entity.FieldTypeDouble
 		} else if _fieldType == "[]float32" {
 			columeType = entity.FieldTypeFloatVector
-			if tagvalue = tpi.Tag.Get("dim"); tagvalue == "" {
-				panic(fmt.Errorf("%s dim is not set", tpi.Name))
+			//set `dim` `max_length` `max_capacity`
+			for _, tag := range []string{entity.TypeParamDim, entity.TypeParamMaxLength, entity.TypeParamMaxCapacity} {
+				dim := append(strings.Split(tagMilvus, tag+"="), "")[1]
+				dim = strings.TrimRight(dim, ", =")
+				if _, err := strconv.Atoi(dim); dim != "" && err != nil {
+					panic(fmt.Errorf("%s %s is not set", tpi.Name, tag))
+				} else if dim != "" && err == nil {
+					TypeParams[entity.TypeParamDim] = dim
+				}
 			}
-			TypeParams[entity.TypeParamDim] = tagvalue
 		} else if _fieldType == "bool" {
 			columeType = entity.FieldTypeBool
 		} else if _fieldType == "int8" {
@@ -155,11 +157,22 @@ func (c *Collection[v]) BuildInSchema() {
 			columeType = entity.FieldTypeInt32
 		} else if _fieldType == "byte" {
 			columeType = entity.FieldTypeBinaryVector
-			if TypeParams["dim"] = tpi.Tag.Get("dim"); TypeParams["dim"] == "" {
-				panic(fmt.Errorf("%s dim is not set", tpi.Name))
+			if strings.Contains(tagvalue, "ind") {
+				c.IndexFieldName = tpi.Name
+			}
+
+			//set `dim` `max_length` `max_capacity`
+			for _, tag := range []string{entity.TypeParamDim, entity.TypeParamMaxLength, entity.TypeParamMaxCapacity} {
+				dim := append(strings.Split(tagMilvus, tag+"="), "")[1]
+				dim = strings.TrimRight(dim, ", =")
+				if _, err := strconv.Atoi(dim); dim != "" && err != nil {
+					panic(fmt.Errorf("%s %s is not set", tpi.Name, tag))
+				} else if dim != "" && err == nil {
+					TypeParams[entity.TypeParamDim] = dim
+				}
 			}
 		} else {
-			panic(fmt.Errorf("unsupported type %s", _fieldType))
+			panic(fmt.Errorf("PrimaryKey should be unique, with type int64 or string, unsupported type %s", _fieldType))
 		}
 
 		c.schema.Fields = append(c.schema.Fields, &entity.Field{

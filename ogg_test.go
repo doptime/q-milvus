@@ -13,9 +13,9 @@ import (
 // a improved version will recalculate word embedding, and take the everage word embedding as search vector
 
 type OggAction struct {
-	Id     int64     `schema:"in,out" primarykey:"true"`
-	Ogg    string    `schema:"in,out" max_length:"65535"`
-	Vector []float32 `dim:"768" schema:"in"`
+	Id     int64     `milvus:"in,out,PK"`
+	Ogg    string    `milvus:"in,out,max_length=65535"`
+	Vector []float32 `milvus:"in,dim=768"`
 	Score  float32   ``
 }
 
@@ -36,7 +36,7 @@ func randomVector(dim int) []float32 {
 
 // var collection = NewCollection[OggAction](milvusAdress, "").Create()
 
-var collection = NewCollection[OggAction](milvusAdress, "")
+var collection = NewCollection[OggAction](milvusAdress)
 
 func TestInsert(t *testing.T) {
 	log.Panic().Str("test", "can exist")

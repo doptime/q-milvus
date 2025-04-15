@@ -36,8 +36,7 @@ func (c *Collection[v]) Create() (ret *Collection[v]) {
 		}
 	}
 	//Auto BuildIndex
-	if len(c.IndexFieldName) > 0 {
-
+	if c.IndexFieldName != "" && c.Index != nil {
 		if indexState, err = _client.GetIndexState(c.ctx, c.collectionName, c.IndexFieldName); err != nil {
 			log.Panic().Err(err)
 		}
