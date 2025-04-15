@@ -41,6 +41,10 @@ func (c *Collection[v]) WithContext(ctx context.Context) (ret *Collection[v]) {
 // index : i.g. entity.NewIndexIvfFlat(entity.IP, 768)
 func NewCollection[v any](milvusAdress string) (collection *Collection[v]) {
 	c := &Collection[v]{}
+
+	if !strings.Contains(milvusAdress, ":") {
+		milvusAdress = milvusAdress + ":19530"
+	}
 	c.milvusAdress = milvusAdress
 	c.partitionName = "_default"
 	c.ctx = context.Background()
