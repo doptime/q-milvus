@@ -1,4 +1,4 @@
-module github.com/yangkequn/q-milvus
+module github.com/doptime/qmilvus
 
 go 1.18
 
