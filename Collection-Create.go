@@ -8,10 +8,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Create : try to create a collection, if it already exists, do nothing
-// Create Only needs to be called once ever
+// CreateCollection : try to create a collection, if it already exists, do nothing
+// CreateCollection Only needs to be called once ever
 // if you want to remove the collection ,just rename the collection name, and remove manually in attu
-func (c *Collection[v]) Create() (ret *Collection[v]) {
+func (c *Collection[v]) CreateCollection() (ret *Collection[v]) {
 	var (
 		_client    client.Client
 		indexState entity.IndexState

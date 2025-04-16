@@ -17,8 +17,8 @@
 #     - uses: "marvinpinto/action-automatic-releases@latest"
 #       with:
 #         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#         automatic_release_tag: "v1.6.12"
+#         automatic_release_tag: "v2.4"
 #         prerelease: false
-#         title: "v1.6.12"
+#         title: "v2.4"
 #         files: |
 #           *.*
