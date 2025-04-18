@@ -18,7 +18,7 @@ func (c *Collection[v]) CreateCollection() (ret *Collection[v]) {
 		err        error
 	)
 	if _client, err = c.NewGrpcClient(c.ctx); err != nil {
-		log.Panic().Str("cannot connect milvus", c.milvusAdress)
+		log.Panic().Str("cannot connect milvus", c.milvusAddress)
 	}
 	defer _client.Close()
 

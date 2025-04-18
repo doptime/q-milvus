@@ -6,7 +6,9 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
@@ -22,15 +24,20 @@ import (
 //	}
 type Collection[v any] struct {
 	ctx            context.Context
-	milvusAdress   string
+	milvusAddress  string
 	partitionName  string
 	collectionName string
 
 	IndexFieldName string
 	Index          entity.Index
 
+	pkFieldName  string // 主键字段名 (通常由 Schema 定义)
 	schema       *entity.Schema
 	outputFields []string
+
+	client     client.Client
+	clientOnce sync.Once
+	clientErr  error
 }
 
 func (c *Collection[v]) WithContext(ctx context.Context) (ret *Collection[v]) {
@@ -45,7 +52,7 @@ func NewCollection[v any](milvusAdress string) (collection *Collection[v]) {
 	if !strings.Contains(milvusAdress, ":") {
 		milvusAdress = milvusAdress + ":19530"
 	}
-	c.milvusAdress = milvusAdress
+	c.milvusAddress = milvusAdress
 	c.partitionName = "_default"
 	c.ctx = context.Background()
 
@@ -111,7 +118,6 @@ func (c *Collection[v]) BuildInSchema() {
 		Fields:         []*entity.Field{},
 	}
 
-	primarykey := 0
 	for i := 0; i < _type.NumField(); i++ {
 		// gets us a StructField
 		tpi := _type.Field(i)
@@ -123,7 +129,10 @@ func (c *Collection[v]) BuildInSchema() {
 		_fieldType := tpi.Type.String()
 		_primarykey := strings.Contains(tagMilvus, "PK") && (_fieldType == "int64" || _fieldType == "string")
 		if _primarykey {
-			primarykey += 1
+			if c.pkFieldName != "" {
+				panic(fmt.Errorf("primarykey should be unique, only one field can be set as primary key"))
+			}
+			c.pkFieldName = tpi.Name
 		}
 
 		var columeType entity.FieldType
@@ -188,7 +197,5 @@ func (c *Collection[v]) BuildInSchema() {
 		})
 
 	}
-	if primarykey != 1 {
-		panic(fmt.Errorf("primarykey not unique"))
-	}
+
 }

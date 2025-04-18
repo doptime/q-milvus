@@ -9,5 +9,5 @@ import (
 // NewGrpcClient : return a client with collection loaded
 // data loaded to memory every 10 minutes
 func (c *Collection[v]) NewGrpcClient(ctx context.Context) (_client client.Client, err error) {
-	return client.NewGrpcClient(ctx, c.milvusAdress)
+	return client.NewGrpcClient(ctx, c.milvusAddress)
 }
