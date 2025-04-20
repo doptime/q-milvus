@@ -64,7 +64,7 @@ func NewCollection[v any](milvusAdress string) (collection *Collection[v]) {
 	}
 	c.collectionName = _type.Name() + "s"
 
-	c.setdOutputFields()
+	c.setOutputFields()
 	c.setInSchema()
 	return c
 }
@@ -81,7 +81,7 @@ func (collection *Collection[v]) WithCreateIndex(index entity.Index) (ret *Colle
 	return collection
 }
 
-func (c *Collection[v]) setdOutputFields() {
+func (c *Collection[v]) setOutputFields() {
 	var (
 		structvalue reflect.Value
 		structType  reflect.Type
@@ -97,7 +97,7 @@ func (c *Collection[v]) setdOutputFields() {
 		// gets us a StructField
 		tpi := structType.Field(i)
 		tagMilvus := strings.ToLower(tpi.Tag.Get("milvus"))
-		if strings.Contains(tagMilvus, "in") || strings.Contains(tagMilvus, "PK") {
+		if strings.Contains(tagMilvus, "out") || strings.Contains(tagMilvus, "PK") {
 			c.outputFields = append(c.outputFields, tpi.Name)
 		}
 	}
@@ -128,7 +128,7 @@ func (c *Collection[v]) setInSchema() {
 		}
 		TypeParams := map[string]string{}
 		_fieldType := tpi.Type.String()
-		_primarykey := strings.Contains(tagMilvus, "PK") && (_fieldType == "int64" || _fieldType == "string")
+		_primarykey := strings.Contains(tagMilvus, "pk") && (_fieldType == "int64" || _fieldType == "string")
 		if _primarykey {
 			if c.pkFieldName != "" {
 				panic(fmt.Errorf("primarykey should be unique, only one field can be set as primary key"))
