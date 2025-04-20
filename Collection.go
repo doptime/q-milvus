@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
@@ -151,7 +152,7 @@ func (c *Collection[v]) BuildInSchema() {
 			columeType = entity.FieldTypeFloatVector
 			//set `dim`  `max_capacity`
 			if _, val, ok := strings.Cut(tagMilvus, entity.TypeParamDim+"="); ok {
-				TypeParams[entity.TypeParamDim] = strings.TrimSuffix(val, ", ")
+				TypeParams[entity.TypeParamDim] = strings.TrimRightFunc(val, func(r rune) bool { return !unicode.IsNumber(r) })
 				if _, err := strconv.Atoi(TypeParams[entity.TypeParamDim]); err != nil {
 					panic(fmt.Errorf("%s %s is not set", tpi.Name, TypeParams[entity.TypeParamDim]))
 				}
@@ -172,7 +173,7 @@ func (c *Collection[v]) BuildInSchema() {
 			}
 			//set `dim`  `max_capacity`
 			if _, val, ok := strings.Cut(tagMilvus, entity.TypeParamDim+"="); ok {
-				TypeParams[entity.TypeParamDim] = strings.TrimSuffix(val, ", ")
+				TypeParams[entity.TypeParamDim] = strings.TrimRightFunc(val, func(r rune) bool { return !unicode.IsNumber(r) })
 				if _, err := strconv.Atoi(TypeParams[entity.TypeParamDim]); err != nil {
 					panic(fmt.Errorf("%s %s is not set", tpi.Name, TypeParams[entity.TypeParamDim]))
 				}
