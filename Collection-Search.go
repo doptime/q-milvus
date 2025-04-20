@@ -8,14 +8,14 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *Collection[v]) SearchVector(query []float32, TopK int) (Ids []int64, Scores []float32, models []v, err error) {
+func (c *Collection[v]) SearchVector(query []float32, TopK int) (models []v, Scores []float32, err error) {
 	var (
 		results []client.SearchResult
 	)
 
 	client, err := c.getClient()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("get client failed: %w", err)
+		return nil, nil, fmt.Errorf("get client failed: %w", err)
 	}
 
 	//查询最相近的相似度
@@ -23,26 +23,59 @@ func (c *Collection[v]) SearchVector(query []float32, TopK int) (Ids []int64, Sc
 	//LoadCollection is necessary
 	err = client.LoadCollection(c.ctx, c.collectionName, false)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	// Use flat search param
 	searchParam, _ := entity.NewIndexFlatSearchParam()
 	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	//get Two column Id and Score, and return
-	Ids, Scores = make([]int64, 0, results[0].ResultCount), results[0].Scores
-	// type of model is v
-	for _, field := range results[0].Fields {
-		if c, ok := field.(*entity.ColumnInt64); ok && field.Name() != "Id" {
-			Ids = append(Ids, c.Data()...)
-		}
-	}
-	models, err = c.ParseSearchResult(&results[0], Ids)
-	return Ids, Scores, models, err
+	Scores = results[0].Scores
+	models, err = c.ParseSearchResult(&results[0])
+	return models, Scores, err
 }
-func (c *Collection[v]) ParseSearchResult(result *client.SearchResult, ids []int64) (models []v, err error) {
+
+func (c *Collection[v]) SearchVectors(query [][]float32, TopK int) (models [][]v, Scores [][]float32, err error) {
+	var (
+		results []client.SearchResult
+	)
+
+	client, err := c.getClient()
+	if err != nil {
+		return nil, nil, fmt.Errorf("get client failed: %w", err)
+	}
+
+	//查询最相近的相似度
+	vectors, vectorField := []entity.Vector{}, c.IndexFieldName
+	for _, q := range query {
+		vectors = append(vectors, entity.FloatVector(q))
+	}
+	//LoadCollection is necessary
+	err = client.LoadCollection(c.ctx, c.collectionName, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	// Use flat search param
+	searchParam, _ := entity.NewIndexFlatSearchParam()
+	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
+		return nil, nil, err
+	}
+
+	for _, result := range results {
+		modelsi, err := c.ParseSearchResult(&result)
+		if err != nil {
+			return nil, nil, err
+		}
+		models = append(models, modelsi)
+		Scores = append(Scores, result.Scores)
+
+	}
+	return models, Scores, err
+}
+
+func (c *Collection[v]) ParseSearchResult(result *client.SearchResult) (models []v, err error) {
 	resultCount := result.ResultCount
 	if resultCount == 0 {
 		return []v{}, nil
@@ -57,15 +90,6 @@ func (c *Collection[v]) ParseSearchResult(result *client.SearchResult, ids []int
 	elemType := vType.Elem()
 	for i := 0; i < result.ResultCount; i++ {
 		models[i] = reflect.New(elemType).Interface().(v)
-	}
-
-	// 填充主键字段 (如果 Go Struct 中有该字段)
-	if c.pkFieldName != "" {
-		pkCol := entity.NewColumnInt64(c.pkFieldName, ids)
-		err = c.SetModelFields(pkCol, models)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set primary key field '%s': %w", c.pkFieldName, err)
-		}
 	}
 
 	// 填充其他在 outputFields 中请求的字段
