@@ -8,7 +8,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *Collection[v]) SearchVector(query []float32, TopK int) (models []v, Scores []float32, err error) {
+func (c *Collection[v]) SearchVector(query []float32, TopK int, expression ...string) (models []v, Scores []float32, err error) {
 	var (
 		results []client.SearchResult
 	)
@@ -27,7 +27,8 @@ func (c *Collection[v]) SearchVector(query []float32, TopK int) (models []v, Sco
 	}
 	// Use flat search param
 	searchParam, _ := entity.NewIndexFlatSearchParam()
-	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
+	expressionStr := append(expression, "")[0]
+	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, expressionStr, c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
 		return nil, nil, err
 	}
 
@@ -37,7 +38,7 @@ func (c *Collection[v]) SearchVector(query []float32, TopK int) (models []v, Sco
 	return models, Scores, err
 }
 
-func (c *Collection[v]) SearchVectors(query [][]float32, TopK int) (models [][]v, Scores [][]float32, err error) {
+func (c *Collection[v]) SearchVectors(query [][]float32, TopK int, expression ...string) (models [][]v, Scores [][]float32, err error) {
 	var (
 		results []client.SearchResult
 	)
@@ -59,7 +60,8 @@ func (c *Collection[v]) SearchVectors(query [][]float32, TopK int) (models [][]v
 	}
 	// Use flat search param
 	searchParam, _ := entity.NewIndexFlatSearchParam()
-	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, "", c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
+	expressionStr := append(expression, "")[0]
+	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, expressionStr, c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
 		return nil, nil, err
 	}
 
