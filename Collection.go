@@ -140,26 +140,22 @@ func (c *Collection[v]) BuildInSchema() {
 			columeType = entity.FieldTypeInt64
 		} else if _fieldType == "string" {
 			columeType = entity.FieldTypeVarChar
-			if tagvalue = tpi.Tag.Get(entity.TypeParamMaxLength); tagvalue == "" {
-				panic(fmt.Errorf("%s %s is not set", tpi.Name, entity.TypeParamMaxLength))
+			if TypeParams[entity.TypeParamMaxLength] = tpi.Tag.Get(entity.TypeParamMaxLength); TypeParams[entity.TypeParamMaxLength] == "" {
+				TypeParams[entity.TypeParamMaxLength] = "65535"
 			}
-			TypeParams[entity.TypeParamMaxLength] = tagvalue
 		} else if _fieldType == "float32" {
 			columeType = entity.FieldTypeFloat
 		} else if _fieldType == "float64" {
 			columeType = entity.FieldTypeDouble
 		} else if _fieldType == "[]float32" {
 			columeType = entity.FieldTypeFloatVector
-			//set `dim` `max_length` `max_capacity`
-			for _, tag := range []string{entity.TypeParamDim, entity.TypeParamMaxLength, entity.TypeParamMaxCapacity} {
-				dim := append(strings.Split(tagMilvus, tag+"="), "")[1]
-				dim = strings.TrimRight(dim, ", =")
-				if _, err := strconv.Atoi(dim); dim != "" && err != nil {
-					panic(fmt.Errorf("%s %s is not set", tpi.Name, tag))
-				} else if dim != "" && err == nil {
-					TypeParams[entity.TypeParamDim] = dim
-				}
+			//set `dim`  `max_capacity`
+			TypeParams[entity.TypeParamDim] = append(strings.Split(tagMilvus, entity.TypeParamDim+"="), "")[1]
+			TypeParams[entity.TypeParamDim] = strings.TrimRight(TypeParams[entity.TypeParamDim], ", =")
+			if _, err := strconv.Atoi(TypeParams[entity.TypeParamDim]); TypeParams[entity.TypeParamDim] != "" && err != nil {
+				panic(fmt.Errorf("%s %s is not set", tpi.Name, TypeParams[entity.TypeParamDim]))
 			}
+
 		} else if _fieldType == "bool" {
 			columeType = entity.FieldTypeBool
 		} else if _fieldType == "int8" {
@@ -174,15 +170,11 @@ func (c *Collection[v]) BuildInSchema() {
 				c.IndexFieldName = tpi.Name
 			}
 
-			//set `dim` `max_length` `max_capacity`
-			for _, tag := range []string{entity.TypeParamDim, entity.TypeParamMaxLength, entity.TypeParamMaxCapacity} {
-				dim := append(strings.Split(tagMilvus, tag+"="), "")[1]
-				dim = strings.TrimRight(dim, ", =")
-				if _, err := strconv.Atoi(dim); dim != "" && err != nil {
-					panic(fmt.Errorf("%s %s is not set", tpi.Name, tag))
-				} else if dim != "" && err == nil {
-					TypeParams[entity.TypeParamDim] = dim
-				}
+			//set `dim`  `max_capacity`
+			TypeParams[entity.TypeParamDim] = append(strings.Split(tagMilvus, entity.TypeParamDim+"="), "")[1]
+			TypeParams[entity.TypeParamDim] = strings.TrimRight(TypeParams[entity.TypeParamDim], ", =")
+			if _, err := strconv.Atoi(TypeParams[entity.TypeParamDim]); TypeParams[entity.TypeParamDim] != "" && err != nil {
+				panic(fmt.Errorf("%s %s is not set", tpi.Name, TypeParams[entity.TypeParamDim]))
 			}
 		} else {
 			panic(fmt.Errorf("PrimaryKey should be unique, with type int64 or string, unsupported type %s", _fieldType))
