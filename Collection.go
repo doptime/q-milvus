@@ -33,7 +33,7 @@ type Collection[v any] struct {
 	Index          entity.Index
 
 	pkFieldName  string // 主键字段名 (通常由 Schema 定义)
-	schema       *entity.Schema
+	schemaIn     *entity.Schema
 	outputFields []string
 
 	client     client.Client
@@ -64,8 +64,8 @@ func NewCollection[v any](milvusAdress string) (collection *Collection[v]) {
 	}
 	c.collectionName = _type.Name() + "s"
 
-	c.BuildOutputFields()
-	c.BuildInSchema()
+	c.setdOutputFields()
+	c.setInSchema()
 	return c
 }
 func (collection *Collection[v]) WithPartitionName(partitionName string) (ret *Collection[v]) {
@@ -81,7 +81,7 @@ func (collection *Collection[v]) WithCreateIndex(index entity.Index) (ret *Colle
 	return collection
 }
 
-func (c *Collection[v]) BuildOutputFields() {
+func (c *Collection[v]) setdOutputFields() {
 	var (
 		structvalue reflect.Value
 		structType  reflect.Type
@@ -96,14 +96,14 @@ func (c *Collection[v]) BuildOutputFields() {
 	for i := 0; i < structvalue.NumField(); i++ {
 		// gets us a StructField
 		tpi := structType.Field(i)
-		if isSchema := tpi.Tag.Get("milvus"); !strings.Contains(isSchema, "out") {
-			continue
+		tagMilvus := strings.ToLower(tpi.Tag.Get("milvus"))
+		if strings.Contains(tagMilvus, "in") || strings.Contains(tagMilvus, "PK") {
+			c.outputFields = append(c.outputFields, tpi.Name)
 		}
-		c.outputFields = append(c.outputFields, tpi.Name)
 	}
 }
 
-func (c *Collection[v]) BuildInSchema() {
+func (c *Collection[v]) setInSchema() {
 	var (
 		tagvalue string
 	)
@@ -112,7 +112,7 @@ func (c *Collection[v]) BuildInSchema() {
 		_type = _type.Elem()
 	}
 
-	c.schema = &entity.Schema{
+	c.schemaIn = &entity.Schema{
 		CollectionName: c.collectionName,
 		Description:    "collection of " + _type.Name() + "s",
 		AutoID:         false,
@@ -123,7 +123,7 @@ func (c *Collection[v]) BuildInSchema() {
 		// gets us a StructField
 		tpi := _type.Field(i)
 		tagMilvus := strings.ToLower(tpi.Tag.Get("milvus"))
-		if !strings.Contains(tagMilvus, "in") {
+		if tagMilvus == "" {
 			continue
 		}
 		TypeParams := map[string]string{}
@@ -182,13 +182,10 @@ func (c *Collection[v]) BuildInSchema() {
 			panic(fmt.Errorf("PrimaryKey should be unique, with type int64 or string, unsupported type %s", _fieldType))
 		}
 
-		c.schema.Fields = append(c.schema.Fields, &entity.Field{
-			Name:       tpi.Name,
-			DataType:   columeType,
-			PrimaryKey: _primarykey,
-			AutoID:     false,
-			TypeParams: TypeParams,
-		})
+		field := &entity.Field{Name: tpi.Name, DataType: columeType, PrimaryKey: _primarykey, AutoID: false, TypeParams: TypeParams}
+		if strings.Contains(tagMilvus, "in") || _primarykey {
+			c.schemaIn.Fields = append(c.schemaIn.Fields, field)
+		}
 
 	}
 

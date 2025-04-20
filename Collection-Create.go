@@ -22,7 +22,7 @@ func (c *Collection[v]) CreateCollection() (ret *Collection[v]) {
 	}
 	defer _client.Close()
 
-	if err = _client.CreateCollection(c.ctx, c.schema, 1); err != nil {
+	if err = _client.CreateCollection(c.ctx, c.schemaIn, 1); err != nil {
 		//if err string do not contain "already exists",return err
 		if !strings.Contains(err.Error(), "already exist") {
 			log.Panic().Err(err)

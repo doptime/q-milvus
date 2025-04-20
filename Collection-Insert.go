@@ -41,7 +41,7 @@ func (c *Collection[v]) BuildColumns(models []*v) (result []entity.Column) {
 	)
 	//all fields of type v to columes
 	result = []entity.Column{}
-	for _, s := range c.schema.Fields {
+	for _, s := range c.schemaIn.Fields {
 		if s.DataType == entity.FieldTypeDouble {
 			colume = entity.NewColumnDouble(s.Name, []float64{})
 		} else if s.DataType == entity.FieldTypeFloat {
