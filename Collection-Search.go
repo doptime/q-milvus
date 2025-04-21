@@ -129,7 +129,7 @@ func (c *Collection[v]) SearchVectors(query [][]float32, spa *SearchParams) (mod
 	}
 
 	// Use flat search param
-	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, spa.Expression, c.outputFields, vectors, vectorField, entity.IP, spa.TopK, spa.SearchParam); err != nil {
+	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, spa.Expression, c.outputFields, vectors, vectorField, spa.MetricType, spa.TopK, spa.SearchParam); err != nil {
 		return nil, nil, err
 	}
 
