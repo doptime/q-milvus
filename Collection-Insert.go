@@ -75,11 +75,11 @@ func (c *Collection[v]) BuildColumns(models ...v) (result []entity.Column) {
 
 		for i := 0; i < len(models); i++ {
 			_v := reflect.ValueOf(models[i])
-			_field := _v.FieldByName(s.Name)
 			// check if _v is a pointer, if so, get the value
 			for _v.Kind() == reflect.Ptr {
 				_v = _v.Elem()
 			}
+			_field := _v.FieldByName(s.Name)
 			// check demension match, if not, skip Insert
 			if _field.Type().Kind() == reflect.Slice {
 				vectorLen := _field.Len()
