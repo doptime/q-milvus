@@ -13,7 +13,7 @@ import (
 //检查源字段和目标字段的对应关系
 //parameter structSlice may be new data or old data
 
-func (c *Collection[v]) Insert(models []*v) (err error) {
+func (c *Collection[v]) Insert(models ...v) (err error) {
 	var (
 		_client client.Client
 	)
@@ -23,7 +23,7 @@ func (c *Collection[v]) Insert(models []*v) (err error) {
 	}
 	// in a main func, remember to close the client
 	defer _client.Close()
-	columes := c.BuildColumns(models)
+	columes := c.BuildColumns(models...)
 	if _, err = _client.Insert(context.Background(), c.collectionName, c.partitionName, columes...); err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (c *Collection[v]) Insert(models []*v) (err error) {
 
 // columes is used to insert []struct to collection
 // the milvus Insert method accept collection only
-func (c *Collection[v]) BuildColumns(models []*v) (result []entity.Column) {
+func (c *Collection[v]) BuildColumns(models ...v) (result []entity.Column) {
 	var (
 		colume entity.Column
 		err    error
@@ -74,7 +74,7 @@ func (c *Collection[v]) BuildColumns(models []*v) (result []entity.Column) {
 		}
 
 		for i := 0; i < len(models); i++ {
-			_v := reflect.ValueOf(*models[i])
+			_v := reflect.ValueOf(models[i])
 			_field := _v.FieldByName(s.Name)
 			// check demension match, if not, skip Insert
 			if _field.Type().Kind() == reflect.Slice {

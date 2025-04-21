@@ -36,7 +36,7 @@ func randomVector(dim int) []float32 {
 
 // var collection = NewCollection[OggAction](milvusAdress, "").Create()
 
-var collection = NewCollection[OggAction](milvusAdress)
+var collection = NewCollection[*OggAction](milvusAdress)
 
 func TestInsert(t *testing.T) {
 	log.Panic().Str("test", "can exist")
@@ -53,7 +53,7 @@ func TestInsert(t *testing.T) {
 	log.Info().Msg("inserting 200 oggAction")
 	fmt.Println("inserting 200 oggAction")
 
-	if err := collection.Insert(oggActionList); err != nil {
+	if err := collection.Insert(oggActionList...); err != nil {
 		t.Error(err)
 	}
 }
