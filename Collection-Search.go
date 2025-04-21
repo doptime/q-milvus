@@ -8,7 +8,79 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *Collection[v]) SearchVector(query []float32, TopK int, expression ...string) (models []v, Scores []float32, err error) {
+type SearchParams struct {
+	SearchParam entity.SearchParam
+	MetricType  entity.MetricType
+	Expression  string
+	TopK        int
+}
+
+func (s *SearchParams) WithSearchParam(sp entity.SearchParam) *SearchParams {
+	return &SearchParams{
+		SearchParam: sp,
+		MetricType:  s.MetricType,
+		Expression:  s.Expression,
+		TopK:        s.TopK,
+	}
+}
+func (s *SearchParams) WithMetricType(mt entity.MetricType) *SearchParams {
+	return &SearchParams{
+		SearchParam: s.SearchParam,
+		MetricType:  mt,
+		Expression:  s.Expression,
+		TopK:        s.TopK,
+	}
+}
+func (s *SearchParams) WithExpression(expr string) *SearchParams {
+	return &SearchParams{
+		SearchParam: s.SearchParam,
+		MetricType:  s.MetricType,
+		Expression:  expr,
+		TopK:        s.TopK,
+	}
+}
+func (s *SearchParams) WithTopK(topk int) *SearchParams {
+	return &SearchParams{
+		SearchParam: s.SearchParam,
+		MetricType:  s.MetricType,
+		Expression:  s.Expression,
+		TopK:        topk,
+	}
+}
+
+func SearchParamIndexFlat() entity.SearchParam {
+	// Use flat search param
+	searchParam, _ := entity.NewIndexFlatSearchParam()
+	return searchParam
+}
+func SearchParamIVFFlat(nprobe int) entity.SearchParam {
+	// Use IVFFlat search param
+	searchParam, _ := entity.NewIndexIvfFlatSearchParam(nprobe)
+	return searchParam
+}
+func SearchParamHNSW(nprobe int) entity.SearchParam {
+	// Use HNSW search param
+	searchParam, _ := entity.NewIndexHNSWSearchParam(nprobe)
+	return searchParam
+}
+func SearchParamANNOY(nprobe, ef int) entity.SearchParam {
+	// Use ANNOY search param
+	searchParam, _ := entity.NewIndexIvfHNSWSearchParam(nprobe, ef)
+	return searchParam
+}
+
+var SearchParamsDefault = &SearchParams{
+	SearchParam: SearchParamIndexFlat(),
+	MetricType:  entity.COSINE,
+	Expression:  "",
+	TopK:        10,
+}
+
+// / SearchVector searches for the most similar vectors in the collection
+// / @param query: the query vector
+// / @param spa: use qmilvus.SearchParamsDefault to set default values, including SearchParam, MetricType, Expression, TopK;
+// / @return models: the most similar vectors
+func (c *Collection[v]) SearchVector(query []float32, spa *SearchParams) (models []v, Scores []float32, err error) {
 	var (
 		results []client.SearchResult
 	)
@@ -25,10 +97,7 @@ func (c *Collection[v]) SearchVector(query []float32, TopK int, expression ...st
 	if err != nil {
 		return nil, nil, err
 	}
-	// Use flat search param
-	searchParam, _ := entity.NewIndexFlatSearchParam()
-	expressionStr := append(expression, "")[0]
-	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, expressionStr, c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
+	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, spa.Expression, c.outputFields, vectors, vectorField, spa.MetricType, spa.TopK, spa.SearchParam); err != nil {
 		return nil, nil, err
 	}
 

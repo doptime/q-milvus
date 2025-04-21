@@ -61,7 +61,7 @@ func TestSearch(t *testing.T) {
 	var searchVector = randomVector(768)
 	//search 10 similar vector
 
-	if scores, models, err := collection.SearchVector(searchVector, 10); err != nil {
+	if scores, models, err := collection.SearchVector(searchVector, SearchParamsDefault); err != nil {
 		t.Error(err)
 	} else {
 		//print length of ids,scores,models
