@@ -73,7 +73,7 @@ var SearchParamsDefault = &SearchParams{
 	SearchParam: SearchParamIndexFlat(),
 	MetricType:  entity.COSINE,
 	Expression:  "",
-	TopK:        10,
+	TopK:        100,
 }
 
 // / SearchVector searches for the most similar vectors in the collection
@@ -107,7 +107,7 @@ func (c *Collection[v]) SearchVector(query []float32, spa *SearchParams) (models
 	return models, Scores, err
 }
 
-func (c *Collection[v]) SearchVectors(query [][]float32, TopK int, expression ...string) (models [][]v, Scores [][]float32, err error) {
+func (c *Collection[v]) SearchVectors(query [][]float32, spa *SearchParams) (models [][]v, Scores [][]float32, err error) {
 	var (
 		results []client.SearchResult
 	)
@@ -127,10 +127,9 @@ func (c *Collection[v]) SearchVectors(query [][]float32, TopK int, expression ..
 	if err != nil {
 		return nil, nil, err
 	}
+
 	// Use flat search param
-	searchParam, _ := entity.NewIndexFlatSearchParam()
-	expressionStr := append(expression, "")[0]
-	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, expressionStr, c.outputFields, vectors, vectorField, entity.IP, TopK, searchParam); err != nil {
+	if results, err = client.Search(c.ctx, c.collectionName, []string{c.partitionName}, spa.Expression, c.outputFields, vectors, vectorField, entity.IP, spa.TopK, spa.SearchParam); err != nil {
 		return nil, nil, err
 	}
 
