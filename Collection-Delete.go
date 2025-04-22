@@ -53,7 +53,7 @@ func (c *Collection[v]) Remove(values ...v) (err error) {
 			fieldValue := vv.FieldByName(c.pkFieldName)
 			ids = append(ids, fieldValue.Int())
 		}
-		return milvuslient.DeleteByPks(c.ctx, c.collectionName, c.partitionName, entity.NewColumnInt64("Id", ids))
+		return milvuslient.DeleteByPks(c.ctx, c.collectionName, c.partitionName, entity.NewColumnInt64(c.pkFieldName, ids))
 	} else if pkField.Type.Kind() == reflect.String {
 		ids := make([]string, 0)
 		for _, v := range values {
@@ -65,7 +65,7 @@ func (c *Collection[v]) Remove(values ...v) (err error) {
 			fieldValue := vv.FieldByName(c.pkFieldName)
 			ids = append(ids, fieldValue.String())
 		}
-		return milvuslient.DeleteByPks(c.ctx, c.collectionName, c.partitionName, entity.NewColumnVarChar("Id", ids))
+		return milvuslient.DeleteByPks(c.ctx, c.collectionName, c.partitionName, entity.NewColumnVarChar(c.pkFieldName, ids))
 	} else {
 		return fmt.Errorf("PrimaryKey in field %s type %s not supported. Type Should be int64 or string", c.pkFieldName, pkField.Type.Kind())
 	}
