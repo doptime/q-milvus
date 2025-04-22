@@ -13,7 +13,7 @@ import (
 //检查源字段和目标字段的对应关系
 //parameter structSlice may be new data or old data
 
-func (c *Collection[v]) Insert(models ...v) (err error) {
+func (c *Collection[v]) Upsert(models ...v) (err error) {
 	var (
 		_client client.Client
 	)
@@ -24,7 +24,7 @@ func (c *Collection[v]) Insert(models ...v) (err error) {
 	// in a main func, remember to close the client
 	defer _client.Close()
 	columes := c.BuildColumns(models...)
-	if _, err = _client.Insert(context.Background(), c.collectionName, c.partitionName, columes...); err != nil {
+	if _, err = _client.Upsert(context.Background(), c.collectionName, c.partitionName, columes...); err != nil {
 		return err
 	}
 	return err

@@ -53,7 +53,7 @@ func TestInsert(t *testing.T) {
 	log.Info().Msg("inserting 200 oggAction")
 	fmt.Println("inserting 200 oggAction")
 
-	if err := collection.Insert(oggActionList...); err != nil {
+	if err := collection.Upsert(oggActionList...); err != nil {
 		t.Error(err)
 	}
 }
