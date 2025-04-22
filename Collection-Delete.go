@@ -60,7 +60,7 @@ func (c *Collection[v]) Remove(values ...v) (err error) {
 		ids := make([]string, 0)
 		for _, v := range values {
 			vv := reflect.ValueOf(v)
-			if vv.Kind() == reflect.Ptr || vv.Kind() == reflect.Slice {
+			for vv.Kind() == reflect.Ptr || vv.Kind() == reflect.Slice {
 				vv = vv.Elem()
 			}
 			// get field value of type v
