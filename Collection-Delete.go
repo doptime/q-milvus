@@ -40,11 +40,9 @@ func (c *Collection[v]) Remove(values ...v) (err error) {
 	}
 	// get field name of type v
 	pkField, ok := _type.FieldByName(c.pkFieldName)
-	if !ok || pkField.Type.Kind() != reflect.Int64 && pkField.Type.Kind() != reflect.String {
-		return fmt.Errorf("pk field %s not found in type %s", c.pkFieldName, _type.Name())
-	}
-	// pk type should be int64 or string
-	if pkField.Type.Kind() == reflect.Int64 {
+	if !ok {
+		return fmt.Errorf("PrimaryKey field %s not found in type %s", c.pkFieldName, _type.Name())
+	} else if pkField.Type.Kind() == reflect.Int64 {
 		ids := make([]int64, 0)
 		for _, v := range values {
 			vv := reflect.ValueOf(v)
@@ -64,11 +62,11 @@ func (c *Collection[v]) Remove(values ...v) (err error) {
 				vv = vv.Elem()
 			}
 			// get field value of type v
-			fieldValue := reflect.ValueOf(vv).FieldByName(c.pkFieldName)
+			fieldValue := vv.FieldByName(c.pkFieldName)
 			ids = append(ids, fieldValue.String())
 		}
 		return milvuslient.DeleteByPks(c.ctx, c.collectionName, c.partitionName, entity.NewColumnString("Id", ids))
 	} else {
-		return fmt.Errorf("pk field %s type %s not supported", c.pkFieldName, pkField.Type.Kind())
+		return fmt.Errorf("PrimaryKey in field %s type %s not supported. Type Should be int64 or string", c.pkFieldName, pkField.Type.Kind())
 	}
 }
